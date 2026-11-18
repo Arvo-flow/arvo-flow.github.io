@@ -199,8 +199,11 @@ describe('SCOREKRAV · talet och dess bevis kan inte säga emot varandra', () =>
     assert.doesNotMatch(text, /på eller under det billigaste/i,
       'ett pris vi inte kan bedöma får aldrig berömmas');
     assert.doesNotMatch(text, /\d+% mer/, 'och inget avstånd får påstås');
-    assert.match(text, /säger inget om avståndet/i, 'säg rakt ut att vi inte kan bedöma det');
-    assert.match(text, /Dela avtalet/i, 'och be om det som skulle låsa jämförelsen');
+    assert.match(text, /jämför inte ert pris mot det/i, 'säg rakt ut att vi inte jämför');
+    // «Dela avtalet, så låser vi jämförelsen» stod här till 2026-11-03. Ingen kod läser nivån ur ett
+    // avtal (contract-upload saknar nivåläsning; rummet läser den ur fakturans rader), så löftet hade
+    // ingen mekanik (regel 9). Det får inte komma tillbaka (MS-04).
+    assert.doesNotMatch(text, /Dela avtalet|låser vi jämförelsen/i, 'ett löfte utan mekanik');
     // Talen vi FAKTISKT vet ska stå kvar — tystnaden gäller påståendet, inte fakta.
     // OBS: toLocaleString('sv-SE') separerar med HÅRT mellanslag (U+00A0), inte vanligt. Ett
     // test som matchar "7 694" med vanligt blanksteg faller på ett korrekt tal — och den fällan
@@ -231,7 +234,8 @@ describe('SCOREKRAV · talet och dess bevis kan inte säga emot varandra', () =>
     assert.equal(bekr.avstandPct, 0);
     assert.equal(scoreUrUnderlag(bekr), 88);
 
-    // Och i en kategori UTAN bred spridning (mobil, 1,1×) gäller kategorins golv som förut.
+    // Och i en kategori UTAN spärr gäller kategorins golv som förut. Ankaret är handbyggt utan spärr;
+    // mobil har spärren sedan grundarbeslutet 2026-10-22 (MS-01), så talen här står för en sådan kategori.
     const smal = byggPrisunderlag({ annualCost: 35880, seats: 10, ankare: { p25: 3228, median: 3588 } });
     assert.equal(smal.ovissNiva, false);
     assert.equal(smal.avstandPct, 11, 'smal kategori → golvet är rätt jämförelse');

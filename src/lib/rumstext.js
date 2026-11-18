@@ -18,16 +18,21 @@ const ref = (p) => (p?.referensProdukt ? ` (${p.referensProdukt})` : '');
 /** Radens «Arvo bedömer», per kod. HTML (b-taggar) — renderas som förut. */
 export const MOTIVERING = {
   granskning: () => 'Kategorin kräver manuell granskning — Arvo inhämtar offert för exakt prisjämförelse. Ni kontaktas när det är klart.',
-  byte: (p, label) => (p.ovPct >= 10
+  // Utan procenttal (obekräftad nivå): inget avstånd till det billigaste, bara att ett byte finns (MS-11).
+  byte: (p, label) => (p.ovPct == null
+    ? 'Arvo rekommenderar byte — det lägre priset finns förberett nedan. Hur långt ni ligger från det billigaste priset i kategorin säger vi inget om.'
+    : p.ovPct >= 10
     ? `Ni betalar <b>${p.ovPct}% mer</b> än det billigaste verifierade alternativet för ${label}. Arvo rekommenderar byte — det lägre priset finns förberett nedan.`
     : `Ni betalar ${p.ovPct > 0 ? `${p.ovPct}% mer` : 'något mer'} än det billigaste verifierade alternativet för ${label} — ett litet gap. Ett lägre avtalspris finns att säkra om ni vill, men ingen brådska; avvärjt är ändå avvärjt.`),
   // Stod: «Arvo bevakar och förbereder bytet inför förnyelsen — ni betalar konkurrenskraftigt till dess.»
   // Ett prisomdöme om ett avtal vi aldrig jämfört (poängen är null). Avtalets datum står i klockan.
   bevakat_avtal: () => 'Avtalet är tidsbundet och bevakas — datumen står i avtalsklockan. Vi har inte jämfört priset, så vi säger inget om prisnivån.',
+  // Gäller licenser och abonnemang (mobil sedan 2026-10-22): inget kategorispecifikt tal och inget
+  // löfte om att ett delat avtal låser jämförelsen, för ingen kod läser nivån ur ett avtal (MS-04).
   oviss_niva: (p, label) => `Ni betalar ${kr(p.perEnhet)} kr ${p.unitLabel ?? 'per enhet/år'} `
-    + `för ${label}. Billigaste jämförbara licens kostar ${Number(p.golv).toLocaleString('sv-SE')} kr${ref(p)} — men priserna i kategorin skiljer `
-    + 'nästan tio gånger mellan billigaste och dyraste, så vi säger inget om avståndet förrän vi '
-    + 'vet vilken nivå ni har. <b>Dela avtalet, så låser vi jämförelsen.</b>',
+    + `för ${label}. Det billigaste publicerade priset är ${Number(p.golv).toLocaleString('sv-SE')} kr${ref(p)}, men `
+    + 'produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har, så vi jämför inte '
+    + 'ert pris mot det.',
   over_golvet: (p, label) => `Ni betalar <b>${p.avstandPct}% mer</b> än det billigaste publicerade priset för ${label}${ref(p)}. `
     + 'Arvo har inget verifierat bytesmål att lägga fram för just den här raden i dag — men priset är inte '
     + 'konkurrenskraftigt, och underlaget nedan visar exakt vad jämförelsen bygger på.',
@@ -36,9 +41,14 @@ export const MOTIVERING = {
     + '— ett litet avstånd, och inget verifierat bytesmål vi kan lägga fram för raden i dag. Underlaget nedan visar jämförelsen.',
   pa_eller_under_golvet: (p, label) => `Priset ligger på eller under det billigaste publicerade priset för ${label}${ref(p)}. `
     + 'Inget byte rekommenderas i dag — dela en ny faktura vid nästa avtalsperiod så kontrollerar Arvo igen.',
-  omatt: (p, label) => `Fakturan är mottagen och klassad som ${label}. Arvo har inget verifierat publikt pris `
-    + 'att jämföra den mot i dag, så vi gör inget påstående om prisläget — raden står under '
-    + 'bevakning och kontrolleras när underlaget bär.',
+  // En rad i en planvalskategori (mobil) har verifierade listpriser; det som saknas är vilken produkt kunden
+  // har. «Inget verifierat publikt pris» hade varit falskt där (RM-R6).
+  omatt: (p, label) => (p.planval
+    ? `Fakturan är mottagen och klassad som ${label}. Produkterna i kategorin har olika listpris, och vi vet `
+      + 'inte vilken produkt ni har, så vi jämför inte priset mot listpriset.'
+    : `Fakturan är mottagen och klassad som ${label}. Arvo har inget verifierat publikt pris `
+      + 'att jämföra den mot i dag, så vi gör inget påstående om prisläget — raden står under '
+      + 'bevakning och kontrolleras när underlaget bär.'),
 };
 
 /** Radens märke, per kod: { text, ton }. `ton` styr bara färgen. */
@@ -55,11 +65,28 @@ export const MARKE = {
 };
 
 /** Texten för en rad ur API:ts läge. Saknas läget säger raden bara att den är mottagen. */
+// Raden vars lagrade byte rummet har hållit inne (lib/lagesregister.js undanhallBytePaOvissNiva) säger vad som
+// hänt. Utan meningen försvann ett byte som fakturavyn eller mejlet visat utan ett ord (D1-4). Fakturavägen
+// räknar sedan 11 nov inget byte på en sådan faktura, så meningen gäller analyser gjorda före grinden och lovar
+// ingenting om en ny analys (MS-11, RM-R1).
+export const BYTE_UTAN_DELAR = 'Analysen av fakturan räknade fram ett byte som kan vara räknat mot det '
+  + 'billigaste publicerade abonnemanget, så vi visar det inte här.';
+
+function bytesForklaring(u) {
+  return u && typeof u === 'object' ? BYTE_UTAN_DELAR : null;
+}
+
 export function radMotivering(a) {
   const label = (getCategoryMeta(a?.category)?.label ?? a?.category ?? '').toLowerCase();
   const kod = a?.lage?.kod;
   const f = MOTIVERING[kod] ?? MOTIVERING.omatt;
-  return f(a?.lage?.params ?? {}, label);
+  const forklaring = bytesForklaring(a?.bytetUndanhallet);
+  // Ett bevakat avtal vars byte hålls inne: «Vi har inte jämfört priset» hade sagt emot förklaringen, för
+  // analysen räknade fram ett byte. Bara avtalsklockans mening står kvar (MS-08).
+  const text = forklaring && kod === 'bevakat_avtal'
+    ? 'Avtalet är tidsbundet och bevakas — datumen står i avtalsklockan.'
+    : f(a?.lage?.params ?? {}, label);
+  return forklaring ? `${text} ${forklaring}` : text;
 }
 
 export function radMarke(a) {

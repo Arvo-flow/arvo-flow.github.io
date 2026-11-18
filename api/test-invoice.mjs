@@ -15,7 +15,7 @@ import { markKvantiteter } from '../lib/kvantitetsvittne.js';
 import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
-import { recommend, RecommenderError, computeLikeForLikeSaasTarget } from '../agents/recommender/recommend.js';
+import { recommend, RecommenderError, computeLikeForLikeSaasTarget, OGRINDAT_BYTE } from '../agents/recommender/recommend.js';
 import { isAudited } from '../lib/revision-gate.js';
 import { grindPausad } from '../lib/grindpaus.js';
 import { farVisaFynd } from '../lib/fyndratt.js';
@@ -1273,7 +1273,14 @@ export default async function handler(req, res) {
     // `metrics` kommer ur radposter som redan konverterats med kursen, så den sekundära
     // besparingen vilar på exakt samma tal som den primära. Den tystas därför med, och en spärrad
     // faktura kan inte längre bära något besparingspåstående alls (FX-16).
-    const secondarySaving = extracted.prispastaendeSparrat ? null : computeSecondarySaving({
+    //
+    // PLANVALSGRINDEN, SAMMA FORM (2026-11-11): en faktura vars kategori har `bytesmalMotKategorigolv`
+    // (i dag mobil) får inget bytespåstående i recommend(), och då får den inte tillbaka ett genom
+    // sidokanalen. Sekundärvägen gav varje kombinerad mobilfaktura ett byte, en poäng och ett mål som
+    // tappade mobilens tillägg (sjätte blicken, H1-3). Bredbandsdelen prissätts inte förrän den byggs
+    // som egen del, och kunden får veta det (BREDBAND_EJ_PRISSATT i recommend.js). FV-A2.
+    const planvalsKategori = BRANCHINDEX[categorized.category]?.bytesmalMotKategorigolv === true;
+    const secondarySaving = (extracted.prispastaendeSparrat || planvalsKategori) ? null : computeSecondarySaving({
       metrics,
       category:                 categorized.category,
       potentialMixedCategories: extracted.potentialMixedCategories ?? false,
@@ -1977,9 +1984,30 @@ export default async function handler(req, res) {
     // En AI kontrollerar en annan AI. Fångar orimliga besparingssiffror som
     // passerat extraktorn och rekommenderaren men inte håller i verkligheten.
     // Fail-open: infrastrukturfel blockerar aldrig en korrekt analys.
-    if (recommendation.shouldSwitch && (extracted.annualCost ?? 0) > 0) {
+    //
+    // MAINS BESLUT PÅ EN PLANVALSFAKTURA (Å-1). Planvalsgrinden nollar mobilbytet, men vakten prövar då det byte
+    // main prövade: grindens ogrindade tal, efter samma två finansiella grindar som ovan. Fälls det går fakturan
+    // till granskning precis som på main, med samma skäl och samma texter. Grinden lägger alltså aldrig en faktura
+    // `auto` som main höll (FV-A20).
+    // Den andra grinden räknar på main med bredbandsdelens besparing (`prim + sek <= 0`), och main räknar den också
+    // på en mobilfaktura. Grenen visar den inte (FV-A2), men beslutet om granskning tar den med (sjuttonde blicken,
+    // Ä-1): utan den gick en faktura där modellen svarar ja med en negativ besparing `auto`, där main höll den.
+    // Talet når ingen kund; det används bara här.
+    const _mainsSekundar = planvalsKategori && !extracted.prispastaendeSparrat ? computeSecondarySaving({
+      metrics,
+      category:                 categorized.category,
+      potentialMixedCategories: extracted.potentialMixedCategories ?? false,
+      industry,
+      employees:                employeesNum,
+    }) : secondarySaving;
+    const _ogrindat = recommendation[OGRINDAT_BYTE];
+    const _ogrindatProvas = !recommendation.shouldSwitch && _ogrindat?.shouldSwitch === true
+      && !((_ogrindat.suggestedAnnualCost ?? 0) > 0 && _ogrindat.suggestedAnnualCost >= (extracted.annualCost ?? 0))
+      && ((_ogrindat.savingPerYear ?? 0) + (_mainsSekundar?.grossSaving ?? 0) > 0);
+    const _provat = recommendation.shouldSwitch ? recommendation : (_ogrindatProvas ? _ogrindat : null);
+    if (_provat && (extracted.annualCost ?? 0) > 0) {
       const _savingPct = Math.round(
-        ((recommendation.savingPerYear ?? recommendation.estimatedAnnualSaving ?? 0)
+        ((_provat.savingPerYear ?? _provat.estimatedAnnualSaving ?? 0)
           / extracted.annualCost) * 100
       );
       const sanity = await verifySanity({
@@ -2134,6 +2162,7 @@ export default async function handler(req, res) {
       shouldSwitch:        recommendation.shouldSwitch === true,
     });
 
+
     // ── P2.1: BERÄKNINGSKEDJA (Calculation Chain) ────────────────────────────────
     // Visar exakt hur varje siffra härletts — nuläge, benchmark, besparing, arvode.
     // Kunden kan verifiera varje steg. Bygger förtroende och möjliggör extern revision.
@@ -2181,7 +2210,10 @@ export default async function handler(req, res) {
       }
     }
 
-    const calculationChain = {
+    // Beräkningsunderlaget står bara under en besparing, samma villkor som intervallet nedan. Utan en visade
+    // fakturavyn «Bruttobesparing 0 kr/år · Er nettobesparing +0 kr/år», också på varje mobilfaktura, där
+    // inget jämfördes (FV-A1).
+    const calculationChain = netSaving > 0 ? {
       currentAnnualCost: {
         value:  extracted.annualCost,
         source: extracted.billingPeriod === 'annual'
@@ -2201,7 +2233,7 @@ export default async function handler(req, res) {
       grossSaving: { value: grossSaving },
       arvoFee:     { value: arvoFee,    formula: `${grossSaving?.toLocaleString('sv-SE')} kr × ${Math.round(ARVO_FEE_RATE * 100)} %` },
       netSaving:   { value: netSaving },
-    };
+    } : null;
 
     // ── P2.2: KONFIDENSINTERVALL (Saving Range) ───────────────────────────────────
     // Visar ett ärligt intervall istället för en enda punktskattning.

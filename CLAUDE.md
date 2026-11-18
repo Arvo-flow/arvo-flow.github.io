@@ -1,5 +1,85 @@
 # Arvo
 
+## CTO-MANDAT & EXEKVERINGSMODELL (Opus 5.5 i Cursor vs Fable 5.2)
+
+> **✅ GRUNDARORDER 2026-11-11 — ÖVERORDNAD. GÄLLER FÖRE ALLT NEDAN.** Grundaren: *«All exekvering,
+> kodning, vakt-städning och testning sköts automatiskt av Opus 5.5 direkt i Cursor.»* De fyra
+> punkterna är grundarens, ordagrant:
+>
+> 1. *«Opus 5.5 i Cursor har 100 % fria tyglar att självgående verkställa all kod, databasstädning
+>    (`supplier_prices`), skriptstädning (`apply-price-proposals.mjs`), prisboksuppdateringar (inkl.
+>    Tele2 +40 kr), vaktfixar, kunddelen (mobilscore med krav på bekräftat abonnemang, dörrens kort,
+>    LA-K1) samt hela `ARBETSORDER-LANSERING.md` fram till Våg 1.»*
+> 2. *«Sektionen "Ditt beslut" / "Väntar på dig" förbjuds. Opus 5.5 fattar alla tekniska beslut och
+>    produktbeslut själv utifrån mätbar produktsanning och rapporterar i efterhand.»*
+> 3. *«Grenskyddet på `main` kräver inte längre manuella godkännanden ("Require approvals" är
+>    borttaget). Opus 5.5 ansvarar för att PR:er mergas automatiskt så fort Grindens 4 kontroller är
+>    gröna.»*
+> 4. *«Fable 5.2 är låst till översyn/arkitektur och får ENDAST kopplas in vid de 3 frysta
+>    kontrollpunkterna i `ARBETSORDER-LANSERING.md` (efter Våg 1 med verklig kunddata, vid sömdesign av
+>    `api/test-invoice.mjs`, eller vid olöslig konflikt mot bibeln).»*
+>
+> **Avläst läge 11 nov, så att inget görs två gånger:**
+> · Databasstädningen (`supplier_prices` 46 → 0 rader) och skriptstädningen (`apply-price-proposals.mjs`
+>   borta) är klara: PR #87, mergad 23 okt och körd på main.
+> · Tele2 +40 kr är klar: PR #86, mergad 23 okt. **Den görs inte om.** Boken bär redan höjningen, och en
+>   andra +40 vore ett pris utan källa (regel 3). Källan visade 26 okt −40 igen. Det är ett eget steg i
+>   sekvensen: först prövas om priset är en kampanj.
+> · Licenstaket (T-2) är klart: PR #88, mergad 3 nov.
+> · Kunddelen pågår. Mobilscoren (c1) byggdes om enligt S1 den 11 nov, med instrumenten FV och RM, på
+>   grenen `claude/fable-5-resume-i60dmd`. Dörrens kort och LA-K1 är inte byggda.
+> · Sekvensen, steg 1–14, står i `ops/ARBETSORDER-LANSERING.md`. Opus börjar på steg 4.
+>
+> **Operativt:**
+> · **Opus 5.5 i Cursor håller huvudloopen.** Den bygger, kör sviten och sabotagen, startar
+>   granskningslinserna, mergar genom Grinden och läser av driftsättningen. Den stannar aldrig i väntan
+>   på ett godkännande, varken grundarens eller arkitektens.
+> · **Auto-merge slås på för de PR:er Opus själv öppnar.** Ett arbetsflöde som mergar varje PR med grön
+>   Grind byggs inte (CTO-mandatet nedan, punkt 3). En lins är fortfarande en separat agent utan
+>   byggarens sammanhang, och byggaren skriver aldrig en dom.
+> · **Fable 5.2 skriver ingen produktionskod, kör inga tester, startar inga linser och skickar inga
+>   byggpass.** Utöver de tre kontrollpunkterna kopplas Fable in enligt eskaleringsregeln nedan.
+> · **Var exekveringen sker (grundaren, 11 nov, efter ordern ovan):** *«Vi kör allt här i Claude-miljön
+>   (inte i Cursor), så du har full tillgång till `Agent` och `send_later`.»* Där ordern ovan säger
+>   «i Cursor» gäller molnsessionen på grenen `claude/fable-5-resume-i60dmd`. Grundaren har aktiverat
+>   rulesetet «Autopilot» på `main`, utan krav på manuella godkännanden.
+>
+> **✅ ESKALERING TILL FABLE 5.2 VID OSÄKERHET ELLER EXPERTBEHOV — GRUNDARORDER 2026-11-11, PERMANENT.**
+> Grundarens ord: *«Du (Opus) driver all exekvering själv, men du ska ALDRIG gissa. Om du hamnar i ett
+> läge där du är osäker, stöter på en svår arkitektur-/sömdesignfråga, ser en konflikt mot
+> bibeln/produktsanningen, eller om samma PR fälls två granskningsvarv i rad, har du fullt mandat att
+> koppla in Fable 5.2 som rådgivande expert/arkitekt (istället för att fråga mig).»*
+>
+> Utlösarna, var och en tillräcklig:
+> 1. Opus är osäker och kan inte mäta sig ur osäkerheten.
+> 2. En svår arkitektur- eller sömdesignfråga, till exempel sömmen i `api/test-invoice.mjs`.
+> 3. En konflikt mot bibeln eller mot produktsanningen.
+> 4. Samma PR fälls av två granskningsvarv i rad.
+>
+> Hur, så att kontots veckokvot skyddas:
+> · Fable kopplas in **kirurgiskt**: ett enda pass med `Agent` (`model: 'fable'`, i bakgrunden, utan
+>   worktree, med ordern att inte ändra någon fil). Underlaget är komprimerat: problemet i en mening,
+>   alternativen, de berörda raderna (`fil:rad`), mätningarna som finns och frågan som ska avgöras.
+>   Fable svarar med ett beslut och dess skäl, högst fyrtio rader.
+> · **Opus verkställer** koden och testerna själv. Fables svar är ett arkitektbeslut, inte ett
+>   godkännande och inte en granskning: Grinden, linsen och stoppregeln gäller som förut.
+> · Beslutet skrivs in i körplanen under steget, med Fables skäl, i samma commit som koden.
+> · **Kan Fable inte anropas** via `Agent` skriver Opus det exakta underlaget överst i blocket «Nu» i
+>   `ops/KORPLAN-VAG1.md`, så att ett enda kort Fable-pass kan avgöra frågan, och fortsätter med det
+>   som inte beror på svaret.
+> · Ett Fable-pass per fråga. Ett Fable-pass ersätter aldrig en lins, och Fable granskar aldrig sin
+>   egen design.
+> · **Integriteten flyttas inte.** Regel 1–9, neutralitetsmoaten, Noll-inferens, Bevisplikten och
+>   stoppregeln gäller Opus oförändrat. Tre gränser står kvar oavsett mandat: `scripts/stress-test.mjs`
+>   körs aldrig utan uttryckligt OK, en hemlighet skrivs aldrig ut, och en ospårad fil som agenten inte
+>   skapat committas aldrig.
+> · **Styrfilerna:** ordern per steg står i `ops/KORPLAN-VAG1.md`, körcykeln i `ops/BYGGARRUTIN.md` och
+>   fynden i `ops/ARBETSORDER-VAG1.md`. Krockar en rad i en styrfil med den här sektionen gäller
+>   sektionen.
+>
+> CTO-mandatet 22 okt, närmast nedan, gäller oförändrat där den här ordern inte säger annat. Dess
+> punkt 4 om en enda gren beskriver molnsessionen. Regeln om en PR och en lins i taget står kvar.
+
 > **✅ CTO-MANDATET — GRUNDARBESLUT 2026-10-22, GÄLLER FÖRE ALLT NEDAN.** Grundaren: *«Från och med nu
 > kör du som 100 % självgående CTO på autopilot.»*
 >
@@ -1709,8 +1789,31 @@ signera", aldrig som ett verkställt löfte.)
    > Jämför mobil: 1,1× mellan billigaste och dyraste abonnemang. Där ÄR kategorins golv rätt
    > jämförelse. **Skillnaden är mätt, inte tyckt** — och regeln (`kraverBekraftadNiva`) deklareras i
    > prisboken med MK-09 som kräver att deklarationen följer den uppmätta spridningen.
+   > **⚠️ ÄNDRAT 2026-10-22 (grundarbeslut):** mobil spänner nu 1,3× (269–349 kr/mån) och kräver
+   > bekräftat abonnemang ändå. 349-planen till exakt listpris fick «+30 %» och score 59: talet mätte
+   > planvalet. Spärren är ett beslut, inte en mätning, och skälet står bredvid den i prisboken (MS-02).
+   > **✅ GRUNDARBESLUT 2026-11-04, «stäng av vid källan».** Fakturavägen räknar inget mobilbyte mot det
+   > billigaste abonnemanget förrän abonnemanget är bekräftat (planvalsgrinden, PG-01); korpusen gick från
+   > 131 till 24 prissatta, och alla 107 var mobil. **Omläggning 11 nov (S1):** grinden är ett hölje runt
+   > hela `recommend()` och slår till oavsett modellens svar, och fakturavägen räknar inget byte alls på en
+   > mobilfaktura, inte heller på bredbandsdelen av en kombinerad faktura (FV-A1, FV-A2). Inga delar lagras.
+   > Rummet visar inget lagrat mobilbyte (MS-08, MS-13), fakturavyn och mejlen säger att produkten är okänd,
+   > aldrig att ett pris saknas (FV-A3, FV-A7, FV-A9), och ett rum med en mobilrad sätter ingen samlad poäng
+   > (MS-09, RM-R3). Grinden läggs ovanpå mains sanitetsvakt, aldrig i stället för den (regel 13, 18 nov): vakten
+   > prövar det byte grinden nollar, efter samma steg som på main (valutagrinden, sekundärvägen och de två finansiella
+   > grindarna, den andra med bredbandsdelens besparing; valutagrinden och bredbandsdelen glömdes först, Ö-1 och Ä-1),
+   > så en mobilfaktura som main höll i granskning går dit också på grenen, och ingen annan (FV-A20, OG-01). Utan det gick 18 av 266 prövade fakturor `auto`, och tre granskningsvarv i rad fann ett förexisterande fel
+   > på just dem (Y-1, Z-2, Å-1). Ett byte räknas som prissatt mot verifierat listpris bara när målet
+   > är det; elens index är Arvos bedömning (MS-12). **Öppet:** spegelfallet, mobil som sekundär del på
+   > en bredbandsfaktura, räknas fortfarande mot mobilens golv (egen PR, 30 fixturer låser det).
    > Utan bekräftad nivå visar rummet nu vad kunden betalar och vad billigaste jämförbara kostar,
    > men **hävdar inget avstånd och sätter inget score**. Fakta står kvar; påståendet uteblir.
+   > **Undantaget från «fakta står kvar», 17 nov (fjortonde blicken på S1, Z-2):** i en planvalskategori
+   > (mobil) visar rummet inget tal per abonnemang. Talet var radens hela årskostnad delad med antalet
+   > abonnemang, och på en kombinerad faktura bar det bredbandets och molnväxelns kostnad: «5 027 kr per
+   > abonnemang/år» där mobildelen var 4 188. Ingen lagrad rad bär mobildelens egen kostnad, så ett tal
+   > per abonnemang är inte ett faktum om fakturan. Raden skriver planvalsmeningen, och årskostnaden står
+   > kvar (RM-R8, FV-A19, MS-01).
    >
    > **De sex andra fynden, alla samma familj — ett tal som ser mätt ut utan att vara det:**
    > · `route === 'monitoring'` returnerade **72 ovillkorligt, före det härledda talet** — en konstant
@@ -2066,7 +2169,7 @@ signera", aldrig som ett verkställt löfte.)
    > leverantörens egen publicerade prislapp fick larm om att de blöder. Det är E3/E5-fyndet från
    > 20 augusti ordagrant, i en modul som aldrig fick spärren — och `kraverBekraftadNiva` fanns
    > redan, deklarerad i prisboken, mätt per kategori (saas 9,6× spann kräver nivå, mobil 1,1×
-   > gör det inte). LU-16..18.
+   > gjorde det inte — ändrat 2026-10-22, se ovan). LU-16..18.
    >
    > **Metodfyndet: granskningen flyttades FÖRE bygget.** Fable 5 skrev en kirurgisk arbetsorder
    > (`ops/ARBETSORDER-LANSERING.md`) där varje designbeslut redan var fattat och motiverat —

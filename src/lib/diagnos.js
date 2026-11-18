@@ -61,6 +61,14 @@ export const ANALYSRUBRIKER = {
     text: 'Vi hittar inget publikt pris att byta ned till hos en annan leverantör. Däremot ligger '
         + 'ni på en nivå som har en billigare nivå under sig hos er nuvarande — talen står i underlaget.',
   },
+  // En planvalskategori (mobil): priset finns, produkten är okänd. Speglar lib/lagesregister.js PLANVAL_BESKED,
+  // låst lika i FV-A9. «Vi hittar inget publikt pris att byta ned till» hade varit falskt här (S1, 11 nov).
+  planval: {
+    positivtPastaende: false,
+    rubrik: 'Ingen jämförelse mot listpris.',
+    text: 'Produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har. Därför jämför vi inte '
+        + 'ert pris mot listpriset.',
+  },
   // Kategorin saknar revisionsgrindens täckning: vi visar inga tal alls.
   kategori_omatt: {
     positivtPastaende: false,
@@ -68,6 +76,25 @@ export const ANALYSRUBRIKER = {
     text: 'Koppla Fortnox / Visma så mappar vi era volymer mot marknadens bästa priser direkt.',
   },
 };
+
+// ── SIDRUBRIKEN FÖLJER RESULTATETS LÄGE (Q-7, 2026-11-11) ────────────────────────────────────────────
+// «Ni betalar för mycket. En faktura bevisar det.» stod ovanför varje resultat, också ovanför «Ingen jämförelse
+// mot listpris» och en faktura till listpris. Före ett resultat är den sidans erbjudande; efter ett resultat utan
+// byte är den ett påstående om kundens pris som resultatet inte bär. S1 gjorde det vanligare (mobil), så den
+// rättades i samma PR. Valet görs på `lage.harByte`, som API:t räknar (FV-A3), aldrig på rådata.
+export const SIDRUBRIK = {
+  erbjudande: {
+    rubrik: 'Ni betalar för mycket.', betoning: 'En', rest: ' faktura bevisar det.',
+    lede: 'Arvo Intelligence jämför er faktura mot verifierade publika listpriser och visar exakt vad ni '
+      + 'betalar för mycket — och hos vem ni kan spara.',
+  },
+  utanByte: {
+    rubrik: 'Er faktura är genomläst.', betoning: null, rest: '',
+    lede: 'Arvo jämför fakturor mot verifierade publika listpriser där jämförelsen går att belägga. '
+      + 'Vad vi såg på den här fakturan står nedan.',
+  },
+};
+export const sidrubrik = (result) => (result && result.lage?.harByte !== true ? SIDRUBRIK.utanByte : SIDRUBRIK.erbjudande);
 
 // ── DIAGNOSENS MENING — AVSTÅND TILL VERIFIERAT LISTPRIS, ALDRIG ETT BRANSCHSNITT (2026-09-24) ──────
 // Här (i TestaFaktura) stod «Ni har ett marknadsmässigt avtal — bättre än branschsnittet.» och «Ni betalar
@@ -87,6 +114,12 @@ export const UTAN_VERIFIERAT_PRIS = 'Vi har inget verifierat publikt pris för d
  * @returns {string}
  */
 export function diagnosMening(lage, { harByte = false } = {}) {
+  // Planvalsläget bär bara skälet och att vi inte jämför mot listpris. Den allmänna ramen nedan sa «Vi hävdar därför
+  // inget om er prisnivå i dag, och lägger aldrig fram en besparing vi inte kan räkna hem», som ett fynd på samma
+  // faktura gör falskt (Fables beslut 12 nov, FV-A13).
+  if (lage?.rubrik === 'planval' && !lage?.matt) {
+    return `Vi har läst er faktura, men ${lage.skal}. Därför jämför vi inte ert pris mot listpriset.`;
+  }
   if (!lage?.matt) {
     return `Vi har läst er faktura och ert nuläge — men ${lage?.skal ?? 'jämförelsen kunde inte göras'}. Vi hävdar därför inget om er prisnivå i dag, och lägger aldrig fram en besparing vi inte kan räkna hem.`;
   }

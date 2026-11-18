@@ -282,9 +282,10 @@ describe('LICENSNIVÅ · jämförelsen gäller kundens egen produkt', () => {
     // längre ett avstånd alls utan bekräftad nivå — vi säger att vi inte kan säga det, och ber
     // om avtalet. Vakten prövar att den meningen finns, inte den gamla reservationen.
     assert.match(rum, /ovissNiva/, 'rummet måste läsa flaggan för obekräftad nivå');
-    assert.match(rum, /kan vi inte\s+säga|säger inget om avståndet/i,
+    assert.match(rum, /kan vi inte\s+säga/i,
       'utan bekräftad nivå ska rummet säga att avståndet inte går att uttala sig om');
-    assert.match(rum, /Dela avtalet/i, 'och be om det som skulle låsa jämförelsen');
+    // Löftet «Dela avtalet, så låser vi jämförelsen» saknade mekanik och är borttaget (MS-04).
+    assert.doesNotMatch(rum, /Dela avtalet|låser vi jämförelsen|Med avtalet i handen/i, 'ett löfte utan mekanik');
     assert.match(rum, /Listpris för er nivå/,
       'med bekräftad nivå ska raden säga att det är DERAS nivå, inte kategorins billigaste');
   });

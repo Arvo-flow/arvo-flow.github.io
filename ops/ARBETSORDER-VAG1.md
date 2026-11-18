@@ -4,15 +4,188 @@ Grundaren gav 22 okt ett totalt CTO-mandat (CLAUDE.md, överst). Det här är k�
 `ops/ARBETSORDER-LANSERING.md`, vars punkter 1, 2, 3 och 5 är klara. Varje steg är en egen fokuserad
 PR som mergas genom Grinden. En uppgift och en granskningslins körs i taget.
 
+> **11 nov: körplanen står i `ops/KORPLAN-VAG1.md`.** Grundaren satte samma dag rollfördelningen
+> (arkitekten planerar, byggaren verkställer enligt `ops/BYGGARRUTIN.md`). Tabellen nedan är historik
+> fram till 10 nov. Den här filen är fyndliggaren: varje granskningsfynd och varje loggat förexisterande
+> fel står här.
+
 ## Läge
 
 | Steg | Innehåll | Läge |
 |---|---|---|
 | a | PR #86: Tele2 +40 kr, en prisbok (majtabellen och seedarna bort), vakter framåt | mergad 23 okt (5e73c277) efter fem granskningsvarv |
 | b | Databas och skript: majraderna i `supplier_prices` bort, död skrivning i `scripts/apply-price-proposals.mjs` bort | mergad 23 okt (PR #87, 4f8f2326). Körd på main 23 okt (40352850116): `supplier_prices` 46 → 0 rader, historiken 2 → 1 |
-| T-2 | Licenstaket per nivårad, mains tak per plats kvar | egen PR, se T-2 nedan |
-| c | Kunddelen: mobilscoren, dörrens kort, LA-K1, det frysta golvet i rummet (K-5) | efter b |
+| T-2 | Licenstaket per nivårad, mains tak per plats kvar | mergad 3 nov (PR #88, 1677f2bd) efter tolv granskningsvarv; live på Vercel |
+| c | Kunddelen: mobilscoren, dörrens kort, LA-K1, det frysta golvet i rummet (K-5) | c1 mobilscoren: sex granskningsvarv, alla BLOCKERAR; vägval 10 nov, se nedan. c2 (LA-K1) byggd men förlorad med containern, byggs om efter c1 |
 | d | Arbetsorderns punkt 4: live-verifiering och rummet i 390 och 1600 px | efter c |
+
+## c1 · mobilscoren (grundarbeslut 22 okt)
+
+Mobil kräver ett bekräftat abonnemang innan rummet visar avstånd och score
+(`kraverBekraftadNiva` i prisboken, med skälet i `kraverBekraftadNivaSkal`; MS-01, MS-02). Ingen kod läser
+i dag ett mobilabonnemang ur fakturan, så varje mobilrad visar vad kunden betalar, det billigaste
+publicerade priset och det näst billigaste abonnemanget, utan avstånd och utan poäng. Renderat i 390 och
+1600 px med motprov (`scripts/screenshot-mobilscore.mjs`).
+Fyra fel i samma kort, förexisterande och synliga för mobil, lagade i samma PR:
+- **Medianens etikett.** Raden «Samma licens utan bindning» visade 3 588 kr för mobil, som är ett annat
+  abonnemang. Etiketten deklareras nu i prisboken (`medianEtikett`) och visas bara där den finns (MS-03).
+- **Marknadsankaret** jämförde kundens pris med medianen och kallade den «leverantörens eget listpris», för
+  mobil ett annat abonnemang och för M365 Business Standard. Kategorier som kräver bekräftad nivå får inget
+  ankarkort; deras fakta står i radens underlag (MS-06).
+- **«Prissatta»** räknade rader vi uttryckligen inte dömer. En rad med obekräftad nivå räknas nu som mottagen
+  (MS-07, RR-01).
+- **«Dela avtalet, så låser vi jämförelsen»** hade ingen mekanik: ingen kod läser nivån ur ett avtal. Borta
+  ur rummet och raden, också för M365 (MS-04, SK-14, LN-08). Texterna gäller nu både licenser och abonnemang.
+Prislarmet för mobil är oförändrat, inget larm med eller utan spärren (MS-05). Prospektets ankare får raden
+«Vilken nivå ni har vet vi inte — priset gäller den namngivna produkten» också för mobil, vilket är sant.
+
+**Andra blicken på 1f595621: BLOCKERAR** (`ops/GRANSKNING-c1-mobilscore.md`). Lagat i samma PR:
+- **C1-1 [KUND], infört.** Fakturavägen lagrar 349-planen till listpris med byte till 269-planen och
+  9 600 kr. Rummet visade då poäng 66 och «23% mer» bredvid «Vi sätter varken avstånd eller poäng här».
+  Ett lagrat byte på en rad med obekräftad nivå stryks nu vid läsning, och raden bär skälet
+  (`bytetUndanhallet`, MS-08).
+- **C1-2 [KUND], vanligare.** Med mobilraden utanför vägningen blev 100 abonnemang och en lönerad «Allt är
+  under kontroll». Ett rum med en obekräftad rad sätter nu ingen samlad poäng och berömmer inte. När andra
+  rader är mätta säger domen «Delvis mätt» och hur många som är prissatta (MS-09).
+- [VAKT] C1-5 (ankarvalet prövas genom anrop, `src/lib/ankarval.js`), C1-6 (MS-08), C1-7 (1,1× rättat i
+  kod, test och bibel) och C1-8 (nivågrenen prövad, MS-05:s titel).
+
+**Andra blicken på lagningen 9395d8d7: BLOCKERAR** (`ops/GRANSKNING-c1-mobilscore-andra.md`). Lagat:
+- **D1-1 [KUND], infört av lagningen.** Strykningen tog också korrekta M365-byten på rader där rummet inte
+  läser nivån (IT-8821, Premium och Basic: 24 566 kr/år netto, räknat nivå för nivå). Den gäller nu bara där
+  prisboken deklarerar att bytesmålet är kategorins golv (`bytesmalMotKategorigolv`, i dag mobil). IT-8821
+  är motprov i MS-08 och i renderingssonden.
+- **D1-2 [KUND], infört av lagningen.** Ett rum med en obekräftad mobilrad och ett bredbandsbyte visade
+  «Delvis mätt · 0 av 2 fakturor prissatta» under «1 avtal kan skärpas». Med ett byte säger chippet nu
+  «grundat på era bytesmål · ingen samlad poäng», och «Delvis mätt» skriver aldrig «0 av» (MS-10).
+  Poängkortets etikett är åter mains: den skrev ut prisunderlagsrader som om de var raderna i poängen.
+- [VAKT] D1-3 (MS-08 och MS-10 prövar lagningsriktningarna) och D1-4 (raden säger varför bytet saknas,
+  `BYTE_UNDANHALLET` i `src/lib/rumstext.js`).
+- **Förexisterande, oförändrat:** ett bredbandsbyte räknas som mottaget, inte prissatt, så rummet säger
+  «Vägde 0 fakturor» och «0 prissatta» bredvid bytet (punkten «Rummets bredbandsrad» nedan).
+
+**Tredje blicken på 88104b30: BLOCKERAR** (`ops/GRANSKNING-c1-mobilscore-tredje.md`). Lagat:
+- **E1-1 [KUND].** IT-8821 behöll sitt byte men rummet sa «Prissatta 0» och «Vägde 0 fakturor» under det.
+  En rad är nu prissatt när den har en dom: ett underlag med bekräftad jämförelse, eller ett byte som visas
+  (`arPrissatt`). Bara rader utan dom stoppar den samlade poängen (`rum.ovissa`). Ett bredbandsbyte räknas
+  därmed också som prissatt, så den förexisterande «Vägde 0 fakturor» bredvid ett bredbandsbyte är borta
+  (MS-10, MS-11).
+- **E1-2 [KUND].** På en kombinerad mobil- och bredbandsfaktura ströks hela bytet med en förklaring som
+  sa att det var räknat mot den billigaste produkten. Raden lagrar bara summan, och en omräkning vid läsning
+  hade gått förbi fakturavägens spärrar (valutaspärren m.fl.), så **beslutet är att hålla inne hela bytet
+  tills fakturavägen skiljer delarna åt (C1-3)**. Förklaringen säger nu sanningen: att en annan tjänsts del,
+  till exempel bredband, kan ingå i beloppet och inte går att skilja ut i efterhand (MS-11 låser texten).
+  Kostnad, öppet: bredbandsdelen syns inte i rummet för sådana fakturor förrän C1-3 är byggd. Den syns i
+  fakturavyn och mejlet.
+- **E1-5 [KUND], förexisterande i en text grenen skrev.** En rad med obekräftad nivå och ett byte som står
+  kvar sa «Vi sätter varken avstånd eller poäng här» bredvid sin poäng. Den raden har nu ett eget underlag:
+  bytet är räknat mot listpriset för det som står på fakturan (MS-11).
+- [VAKT] E1-3 (lagningsriktningarna fäller tester) och E1-4 (texterna låsta; kommentarerna och bibeln säger
+  «helt eller delvis»).
+
+**Fjärde blicken på 6d2ac35f: BLOCKERAR** (`ops/GRANSKNING-c1-mobilscore-fjarde.md`). Lagat:
+- **F1-1 [KUND].** `arPrissatt` kallade ett elbyte prissatt «mot verifierat publikt listpris», men elbytet räknas
+  mot Arvos eget säsongsindex. Ett byte räknas nu bara när kategorins prisbok är verifierad (`bytesmalVerifierat`,
+  `source: 'real-public'`). Rubriken i `byte_omatt` och chippet utan poäng påstår ingen källa (MS-10, MS-12).
+- **F1-2 [KUND].** Byggarbeslutet E1-2 var fel: bredbandsdelen går att skilja ut vid läsning, på kronan, med
+  fakturavägens egna funktioner, och valutaspärren kan inte ha slagit till på en rad med lagrat byte (FX-15,
+  FX-16). Bredbandsdelen räknas nu fram och står kvar, taklagd vid det lagrade bruttot; bara mobildelen hålls
+  inne, och raden säger vilken del bytet gäller (MS-13). K1 5 952, K2 2 976, K3 2 976, K4 8 448 och K5 2 976 kr/år
+  netto, granskarens tal.
+- **F1-3 [KUND].** Underlaget på en rad med obekräftad nivå och ett byte påstår inte längre vad bytet är räknat mot,
+  och raden får inget procenttal (MS-11).
+- **F1-4, förexisterande, stängt i samma PR.** En mobilrad utan underlag (inget avläst antal) eller en bevakad
+  mobilrad behöll sitt byte och sin poäng. Spärren hänger nu på kategorin, inte på underlaget (MS-08, MS-09).
+- [VAKT] F1-6 (MS-11:s ordningskontroller kräver att båda grenarna finns) och F1-7 (kommentarer och bibel).
+- **Förexisterande, oförändrat, loggat:** på en kombinerad rad räknar underlaget «Ni betalar X kr per
+  abonnemang» med bredbandets kostnad inräknad (K3: 4 546 kr). Samma tal gav main «+38 %». Hör till C1-3.
+  F1-5 (beröm i rum där bytesraden ligger 15–21 % över) står kvar som förexisterande.
+
+**Femte blicken på d902f5c0: BLOCKERAR** (`ops/GRANSKNING-c1-mobilscore-femte.md`), och därmed ett byte av
+väg. G1-1 (procenttal på en kombinerad rad utan antal), G1-2 (dagens bredbandspris avgjorde vad en gammal
+analys innehöll) och G1-3 (extraktionens flagga sparas inte) har samma rot som varje varv före dem: rummet
+räknade fram delarna av en lagrad besparing i efterhand. **Grundarbeslut 2026-11-04: stäng av vid källan.**
+- **Planvalsgrinden** (`agents/recommender/recommend.js`): i en kategori med `bytesmalMotKategorigolv` räknas
+  inget primärt byte, och kunden får en kodskriven mening (`PLANVALS_MENING`) i stället för modellens prosa
+  (PG-01, PG-02). Korpusen: 131 → 24 prissatta, 163 → 270 tystade; alla 107 ändrade är mobil, «prissatt →
+  tystad», inga andra kategorier rörde sig (mätt per fixtur med och utan grinden). Facit uppdaterat.
+- **Bytets delar lagras** (`lib/bytesdelar.js`, kolumnen `bytesdelar_json`, migrering, valfri kolumn, egen
+  skrivsats): primärt brutto, sekundär del och om grinden slog till (PG-03, BD-01..04).
+- **Rummet läser delarna och räknar ingenting om:** en bredbandsdel som analysen lagrat står kvar exakt som
+  lagrad (MS-13); en rad utan delar, med primär del, okänd version eller annan sekundär kategori visar inget
+  byte och säger att det kan vara räknat mot det billigaste och att en ny analys räknar bredbandsdelen för sig
+  (MS-08, MS-13). Domen säger inte «Inget byte rekommenderas» i ett rum utan samlad poäng.
+- G1-1 och G1-2 är borta med rekonstruktionen. G1-3 kan inte uppstå: rummet antar aldrig att en faktura är
+  kombinerad. G1-5 («1 av 1 prissatta» bredvid «kan inte bedöma allt») står kvar, låg vikt. G1-4 förexisterande.
+- **Efter merge:** kör migreringen (`bytesdelar_json`); tills den körts läker rummets läsning kolumnen, och
+  skrivningen faller tyst till «inga delar», som rummet visar som ett indraget byte. Gamla mobilrader visar
+  inget byte förrän fakturan analyseras igen; mail-in-rader kan köas om (`koa-om-alla`).
+- **Kvar, egen PR:** spegelfallet i `lib/secondary-savings.js` (mobil som sekundär del på en bredbandsfaktura,
+  mot mobilens golv). 30 fixturer låser i dag det beteendet.
+
+**Sjätte blicken på a649404b (5 nov): BLOCKERAR. Domfilen finns inte.** Granskaren lämnade sin dom, men
+containern byttes ut innan filen hade committats. Fynden nedan är hämtade ur granskarens slutsvar i
+sessionens transkript. De är en prövlista: vart och ett återskapas med en körning innan det räknas (sju
+regler 18–20 okt, regel 1).
+- **H1-1 [KUND], infört i a649404b.** En kombinerad mobil- och bredbandsfaktura där mobilen ligger under
+  1,15 × golvet och modellen svarar nej når aldrig grinden. Delarna lagras då med `planvalsgrind: false`, och
+  rummet håller inne bredbandsbytet (2 976 kr) som fakturavyn och mejlen visar. Raden säger att en ny analys
+  räknar bredbandsdelen för sig, vilket den inte gör. 11 av 55 kombinerade fixturer med bredbandsdel hamnar
+  där, och MS-13 kräver i dag det beteendet.
+- **H1-2 [KUND], infört av grenen.** En kombinerad rad utan avläst antal får «Ni betalar 24% mer än det
+  billigaste verifierade alternativet för mobilabonnemang» bredvid «Mobilabonnemangen bedömer vi inte».
+  Talet är bredbandets andel av hela fakturan.
+- **H1-3 [KUND], vanligare.** Grinden skickar varje kombinerad mobilfaktura genom `[secondary-override]`,
+  där mobilens tillägg (växeln) faller ur förslaget. K1: poäng 36 «Kritisk» mot mains 60, pilen
+  45 456 → 26 088 kr/år bredvid bruttot 7 440, «Verifierat pris 26 088» i mejlet och «Arvo branschindex
+  (maj 2026)» om kundens egen mobilkostnad. 6 av 6 kombinerade fixturer med mobiltillägg går nu den vägen.
+- **H1-4 [KUND], förexisterande:** två vägar runt grinden (kombinerat utan primärkomponent; mobil under
+  tröskeln med modellens nej). **H1-5..H1-7 [VAKT]:** MS-13 låser H1-1, PG-03 prövar bara över tröskeln,
+  KM-09 flyttades på en premiss som inte håller, en poäng mot billigaste planen lagras fortfarande, och
+  commitmeddelandet säger mer än grinden gör.
+
+**Förlorat med containern 5–9 nov, eftersom det aldrig pushades:** den lokala grenen `la-k1` (c2, LA-K1),
+utkastet till K-5, de påbörjade lagningarna av H1-1..H1-3 och granskarnas sonder, bland dem den som kör hela
+`api/test-invoice.mjs` med bara nätverket stubbat. c2 och lagningarna går att bygga om ur transkriptet.
+
+**Utvärdering och vägval 10 nov (grundaren: «stanna upp och utvärdera»).**
+- **Riktningen står.** Grinden vid källan, delarna lagrade vid analysen, rummet läser och räknar inte om.
+  Sjätte blicken bekräftade att grundarens exempel (349-planen, «30 % över», 9 600 kr) är stängt i
+  fakturavyn och att korpusens tal stämmer.
+- **PR:en delas inte i två.** Källan och rummet hänger ihop genom regel 5: går källan först säger fakturavyn
+  «vi jämför inte» medan rummet säger «30 % över»; går rummet först blir det C1-1 igen.
+- **Arbetssättet var felet, och det ändras:**
+  1. Instrumenten först. Granskarnas sonder byggs in i sviten: hela fakturahandlern med stubbat nätverk över
+     K1–K6 × modellens ja/nej × med och utan antal, och rummets tillståndsmatris med invarianter. De ska vara
+     röda på a649404b innan lagningen görs.
+  2. I granskningsloopen lagas bara det som blockerar. Allt annat loggas här (avgränsningen 22 okt).
+  3. Inget parallellt arbete på lokala grenar. Varje commit pushas direkt, och en dom committas och pushas
+     i samma stund som den kommer.
+  4. Stoppgräns. Rond 4, 5 och 6 blockerade alla på kombinerade fakturor (7 av de 9 senaste blockerande
+     fynden). Blockerar sjunde blicken där igen stryks den sekundära delen på mobilfakturor vid källan, med en
+     sann mening om att bredbandet på fakturan inte prissätts, och byggs rätt i C1-3 (rad-först). Ingen åttonde
+     rond på samma form (regel 13).
+
+**Omläggning 11 nov (arkitekten): stoppgränsen tas nu, före sjunde blicken.** Avläst i koden samma dag:
+`fakturaLage` sätter fakturans poäng ur hela årskostnaden mot förslaget, medan `radScore` ger samma analys
+ingen poäng i rummet. Att behålla bredbandsdelen kräver alltså ett nytt kundläge, «byte utan poäng», i
+fakturavyn och tre mejl, ovanpå lagningarna av H1-1..H1-3. Rond 4, 5 och 6 föll alla på kombinerade
+fakturor (regel 13). c1 får därför ett enda, totalt påstående: en mobilfaktura får inget byte, inget
+avstånd och ingen poäng i någon yta. Ingen sekundär besparing räknas på en mobilfaktura, och `bytesdelar`
+tas bort. Ordern står i `ops/KORPLAN-VAG1.md` (S1). **Kostnaden, öppet:** bredbandsdelen på en kombinerad
+faktura visas inte förrän den byggs på rätt nivå (A-2 i körplanen). Det avviker från alternativet grundaren
+valde 4 nov.
+
+**Kvar, förexisterande [KUND], egna PR:er (ordningen står i körplanen, S2–S6):**
+- **C1-3 · Fakturavyn, mejlen, briefingen och dörren räknar mobilens avstånd och byte mot det billigaste
+  abonnemanget.** 349-planen till listpris får «Ni betalar 30 % över verifierat publikt listpris», poäng
+  66 och ett byte till 269-planen. Det är grundarens exempel utanför rummet, och roten till C1-1. Bytet ska
+  grindas på samma deklaration som rummet (`kraverBekraftadNiva`), på samma sätt som lfl-grinden för saas.
+  Fakturavägen ska också lagra mobil- och bredbandsdelen var för sig, så att rummet kan visa bredbandsdelen
+  (E1-2). Samma planval finns spegelvänt: en bredbandsfaktura med mobil som sekundär del räknar mobildelen mot
+  kategorins golv (`lib/secondary-savings.js`).
+- **C1-4 · Bytesradens «X% mer» räknas som andel av kundens pris** (`radLage`, (a−s)/a): 23 % där rätt
+  tal är 30 %. Bibelns 85-fel.
 
 ## Förexisterande fynd, loggade enligt avgränsningen 22 okt
 
@@ -114,6 +287,141 @@ Var och en byggs i en egen PR, med egen granskning.
   blir mindre, aldrig större. Innan boken följer källan prövas om Tele2:s API märker priset som
   kampanj. Bibelns regel från HubSpot gäller: det högsta priset i ett block är listpriset, och en
   kampanj kan bara ligga under. Följer boken varje svängning blir det 55 fixturer per kampanj.
+
+- **Briefen säger «Räknat mot verifierat publikt listpris» om varje byte, också ett elbyte.** [KUND],
+  förexisterande, utanför S1. Läst i koden, inte körd: `lib/briefing-generator.js` skriver meningen för
+  varje rad med läget `byte`, men ett elbyte räknas mot Arvos eget säsongsindex (MS-12, `arPrissatt`).
+  Briefen går bara till beviljat premium; om någon är beviljad i dag är inte avläst. Egen PR.
+- **Dörrens brygga säger «Vi väger varje faktura mot verifierade publika listpriser».** [KUND],
+  förexisterande, utanför S1. Läst i koden, inte körd: nitton kategorier tiger och mobil jämförs inte.
+  Bryggan visas bara när marknadsankaret saknas (`lib/domain-intel.js`); hur ofta det sker är inte
+  avläst. Egen PR.
+
+- **Ur den åttonde blickens dom på S1 (`ops/GRANSKNING-s1-mobilfakturan.md`), lagas framåt:**
+  · V-1 [VAKT]: `planvalsgrind` lämnar modellens `optimizationSaving` och `switchSteps` i svaret bredvid
+    `no_action`. Ingen yta läser dem utan `optimize`. Instrumentets matris saknar modellens tredje svar.
+  · V-3 [VAKT]: `savingsBreakdown: null` i grinden och `&& rek.shouldSwitch !== true` i `fakturaLage` kan
+    inte observeras (sabotagen fällde 0). Antingen gör dem till det enda skyddet, eller ta bort dem.
+  · V-4 [VAKT]: neon-stubben svarar med hela raden oavsett vilka kolumner satsen väljer, så FV-L ser inte en
+    SELECT utan `category`. Stubben ska svara med satsens kolumner (IA-11:s form).
+  · V-2 är byggd i e7512b82 (sonden öppnar «Hur vi räknar»).
+  · K-1:s allmänna form, förexisterande och utanför S1: rummets «möjlig nettobesparing» summerar varje rads
+    `net_saving`, också en bredbandsrad utan bytesflagga (minimigränsen nollar flaggan, inte beloppet). [KUND]
+    om en sådan rad står bredvid ett byte; om det sker i produktionen är inte avläst. Egen PR.
+  · Listprisnotisen «Priset baseras på verifierade offentliga listpriser … Vid genomfört byte bekräftas
+    slutpriset i offert» står under «Hur vi räknar» på varje faktura utan byte i en listprisverifierad
+    kategori, också där inget byte finns. Förexisterande, utanför S1 (S1 tog bort den för planval). Egen PR.
+
+- **Ur den nionde blickens dom på S1 (`ops/GRANSKNING-s1-lagningen.md`):**
+  · N-3 [KUND], förexisterande, utanför S1: rummets rad med obekräftad nivå säger «Det billigaste publicerade priset
+    är 3 228 kr (Tele2 Företag mobilabonnemang)» utan bindningstiden, och prisboken namnger ett billigare publicerat
+    abonnemang (Kollega). Samma ankare i prospektet. Egen PR.
+  · Rummets `bevakat_avtal`-rad («Vi har inte jämfört priset, så vi säger inget om prisnivån») är Fables förbjudna
+    form 1 på en monitoring-rad. Förexisterande, utanför S1. Egen PR.
+  · V-5 är byggd i samma commit som Fables beslut (FV-A14).
+
+- **Ur den tionde blickens dom på S1 (`ops/GRANSKNING-s1-tionde.md`):**
+  · W-2 [VAKT]: FV-A12 prövar planvalskonstanterna, inte den renderade fakturavyn; en tillagd mening i vyns JSX
+    fällde 0. W-3 [VAKT]: FV-A14 är en källtextvakt som `|| true` passerar. Båda kräver en renderingsharness i
+    sviten och byggs i samma PR som läget per fakturadel (S6, Fables beslut 13 nov).
+  · N-4 [KUND], förexisterande: fyndet `hardware_financing` (lib/forensics.js) lovar «Bekräfta slutdatum så bevakar
+    vi att den försvinner»; ingen kod gör det. Enradig PR direkt efter S1.
+  · N-5 [KUND], förexisterande och synligt: en kombinerad bredbandsfaktura får «203 % över listpris», räknat på hela
+    fakturan (mobildelen inräknad) mot bredbandets jämförelsepris; underlaget går inte att räkna hem. Byggs i S6.
+- **Ur Fables analyser av gränssnittet (`ops/ANALYS-GRANSSNITT-FABLE.md`), avlästa i koden 13 nov:** F1.2 (avtalsvarslet
+  bokförs utan att Resends fel läses, `api/cron/send-reminders.mjs:156, 199, 234`) går först av dem, eftersom en
+  missad tidsfrist är ett kundtal; därefter D-1 (dörrens fynd når aldrig rummet), F1.1 (ingen brief en tyst månad) och
+  rummets ordning.
+
+- **Ur den elfte blickens dom på S1 (`ops/GRANSKNING-s1-elfte.md`), till S6:**
+  · P-2 [VAKT]: FV-A15, FV-A16 och förbudslistan låser ord, inte påståendet (fem sabotage fällde 0). Beviset är ett
+    läge per fakturadel och den renderade vyn i sviten.
+  · Fel P när regexen missar en mobilrad («Telia Jobbmobil 15 GB» ger P för hela fakturan). Main bär samma tal; efter
+    S1 blir resten 0 och stryks, men P är fel.
+  · Promptens KRITISKT-instruktion för en kombinerad faktura med sekundär besparing säger «BÅDE mobilkomponenten
+    (primär) OCH bredbandskomponenten (sekundär)» också när bredbandet är primärt. Avläst i FV-fallet med mobildel
+    449 kr. Förexisterande.
+
+- **Ur den tolfte blickens dom på S1 (`ops/GRANSKNING-s1-tolfte.md`):**
+  · **Hårdvarujusteringen [KUND], förexisterande, syns för kund; egen PR direkt efter S1.** En rad som extraktionen
+    typar `hardware` räknas i engångsavgifterna och ingår aldrig i årskostnaden (`agents/test-invoice/extract.js:883`),
+    men `computeHardwareAdjustment` drar av varje avbetalningsrad från årskostnaden (`lib/hardware-installments.js:55`).
+    «Ni betalar idag» blir för lågt (10 416 kr/år där analysmejlet säger 11 616 kr/år för samma faktura), och den
+    justerade besparingen, arvodet och nettot räknas på samma fel bas.
+  · X-2 [VAKT]: FV-A17 prövade sin invariant bara där rutnätet nådde, och promptkravet läser bara de rader
+    instrumentet filtrerar fram. Invarianten är struken med resten; promptkravet lagas framåt i S6.
+  · FV-A4 föll en gång 14 nov, i den rena svitkörningen direkt efter sabotagen, och höll sedan i en full svit och fyra
+    egna körningar. Felmeddelandet sparades inte; orsaken är okänd (obekräftad bedömning: tidsberoende under last,
+    till exempel väntan på eld-och-glöm-anrop i kor.mjs). [VAKT] tills den återskapas.
+
+- **Ur den trettonde blickens dom på S1 (`ops/GRANSKNING-s1-trettonde.md`):**
+  · Primärdelens tal P räknas som om radbeloppen gällde en månad (`primaryComponentMonthly × 12`). På en kvartals- eller
+    årsfaktura blir P 3 respektive 12 gånger för stort. S1 stryker P på planvalsfakturor (Y-1); för andra kategorier
+    står felet kvar, förexisterande, och byggs i S6 med läget per fakturadel.
+  · Y-2 [VAKT]: FV-A16 och FV-A17 läser bara `restAnnual`; svaret bär fortfarande `recommendation.nonPrimaryAnnual`
+    (ingen yta läser det i dag). Byggs i S6.
+  · Y-3 [VAKT]: promptens kommentar om resten är rättad i samma commit som Y-1.
+  · FV-A4:s enstaka fel 14 nov gick inte att återskapa (21 körningar av filen, 7 av hela sviten, under last); testet
+    fälls av ett sabotage. Punkten stängs som okänd, ingen åtgärd.
+
+- **Ur den fjortonde blickens dom på S1 (`ops/GRANSKNING-s1-fjortonde.md`):**
+  · Z-2 [KUND], vanligare (blockerade): rummets «Ni betalar {perEnhet} kr per abonnemang/år» bar de andra delarnas
+    kostnad på en kombinerad mobilfaktura. Lagat 17 nov: en rad i en planvalskategori har inget prisunderlag (RM-R8,
+    FV-A19). Förexisterande på main för månadsfakturor; lagningen täcker dem också. Ett tal per abonnemang kommer
+    tillbaka i S6, med mobildelens egen kostnad lagrad.
+  · Z-1 [VAKT], lagat i samma commit: renderingssonden fäller ett tal efter «Kombinerad faktura.» med eller utan
+    etikett. Sabotaget P utan etikett fällde sonden i fyra fall och båda bredderna.
+  · Z-3 [VAKT], lagat i samma commit: FV-A18:s årsfall är Q3 (fem abonnemang), som main håller i granskning och grenen
+    släpper `auto` (avläst genom båda handlerna 17 nov).
+  · Kvar till S6, förexisterande: spegelfallets tal per abonnemang i Marknadsankaret för en bredbandsrad med en
+    mobildel (`customerCost` är radens hela årskostnad, `api/invoice-history.mjs` buildBranchAnchors). Inte avläst om
+    någon kund ser det i dag.
+
+- **Ur den femtonde blickens dom på S1 (`ops/GRANSKNING-s1-femtonde.md`):**
+  · Å-1 [KUND] (blockerade som vanligare): fyndkortet «Hårdvaruavbetalning på en löpande rad · 1 347 kr ·
+    engångsbelopp» om en delbetalning som löper i 36 månader (lib/forensics.js:242: en radtyp som inte är löpande får
+    «engångsbelopp», och `hardware` är inte löpande), och rummets dom «Vi fångade – kr/år» med ett streck i stället för
+    talet. Roten till att det blev vanligare är lagad 18 nov: planvalsgrinden släpper inget som mains sanitetsvakt
+    håller (FV-A20, «Regel 13 tillämpad 18 nov» i körplanen). Kvar, förexisterande och synligt för kund på main för
+    månads- och årsfakturor (avläst av linsen i mains renderade rum och fakturavy): byggs i en egen PR direkt efter S1,
+    tillsammans med hårdvarujusteringen ovan.
+  · Å-2 [VAKT], lagat 18 nov: renderingssonden läser stycket som bär «Kombinerad faktura.» ur DOM:en och kräver att det
+    inte säger något mer på en planvalsfaktura; sabotaget P bakom etiketten utan kolon fäller den i fyra kontroller.
+  · Förexisterande, utanför PR:en, avläst 18 nov: fakturavyns granskningsläge för `sanity_check_failed` säger «Vår
+    algoritm är inte tillräckligt säker på klassificeringen» och «Koppla Fortnox / Visma för en komplett analys av hela
+    er leverantörsreskontra». Skälet är en orimlig besparing, inte klassificeringen, och Fortnox är pausat. Texten är
+    identisk på main (`git show origin/main:src/pages/TestaFaktura/index.js`), och efter lagningen av Å-1 når den samma
+    fakturor som på main. Syns för kund i dag; egen PR, efter hårdvaruavbetalningen.
+
+- **Ur den sextonde blickens dom på S1 (`ops/GRANSKNING-s1-sextonde.md`):**
+  · Ö-1 [KUND], infört av a3a6e83f (blockerade): valutagrindens spridning kopierade det ogrindade bytet, så en
+    mobilfaktura i EUR eller USD med en kurs som inte är färsk gick till granskning där main analyserar den. Lagat 18 nov:
+    valutagrinden river också det ogrindade bytet (FV-A20, valutafallen med ingen, gammal och färsk kurs).
+  · Ö-2 [VAKT], lagat 18 nov: mains andra finansiella grind (positiv besparing) hade inget test; FV-A20 bär nu linsens
+    fall med negativ besparing, och sabotaget mot grinden fäller det.
+
+- **Ur den sjuttonde blickens dom på S1 (`ops/GRANSKNING-s1-sjuttonde.md`):**
+  · Ä-1 [KUND], infört av S1 (blockerade): kopian av mains andra finansiella grind räknade inte med bredbandsdelens
+    besparing, som main räknar också på en mobilfaktura. En kombinerad mobilfaktura där modellen svarar ja med en
+    negativ besparing och bredbandsraden bär sin hastighet gick `auto` där main håller den. Lagat 18 nov: kopian räknar
+    mains sekundära besparing, bara för granskningsbeslutet (FV-A20, `rest·neg·mbit·ja`).
+
+- **Ur den artonde blickens dom på S1 (`ops/GRANSKNING-s1-artonde.md`, MERGAS på b13d10d8):** tre [VAKT], som mergas
+  och lagas framåt i en egen PR efter S1:
+  · V-A: gränsen i kopian av mains andra grind (`> 0` mot mains `<= 0`) har inget test. Sabotaget `> 0` → `>= 0`
+    fällde 0 av 2 778 och ändrade beteendet för `S·noll` (summan exakt 0). Lagas med ett fall i FV-A20 där summan är 0.
+  · V-B: valutavillkoret i `_mainsSekundar` (api/test-invoice.mjs) är ett skydd bakom valutagrinden, som redan river
+    det ogrindade bytet när priset är spärrat. Sabotaget fällde 0 och ändrade inget i 81 fall. Lagas genom att raden
+    tas bort eller får en kommentar om att den saknar egen tand (bibeln 10 sep).
+  · V-C: stubben i tests/fakturakedjan/lagrade.mjs svarar med hela raden oavsett SELECT, så att `category` kan falla ur
+    påminnelsens och enkätens sats utan att LB-01..03 ser det. Linsens projicerande stubbe (svarar bara med satsens
+    kolumner) gav under sabotaget «7 680 kr/år» för den lagrade mobilraden. Lagas genom att stubben projicerar.
+- **Ur Grinden på PR #89 (18 nov), [VAKT], lagad i PR:en:** Sviten var röd i CI på FV-A20
+  (`valuta·EUR·ingen·ren·ja: route review_queue`) och grön lokalt. Instrumentet stubbade inte `fetch`, så
+  valutafallen utan färsk kurs i KV hämtade en kurs från Riksbanken: i CI svarade den, här blockerades den.
+  Återskapat med en `fetch` som svarar med en färsk kurs (samma fel, samma fall). Instrumentet stänger nu nätet
+  för `fetch` (tests/fakturakedjan/kor.mjs). Kundbeteendet är oförändrat: med en färsk kurs går fallet till
+  granskning också på main.
 
 ## Steg b, avläst underlag (22 okt)
 

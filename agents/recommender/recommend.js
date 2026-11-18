@@ -28,6 +28,7 @@ import { radensNiva, annanLicensprodukt } from '../../lib/licensniva.js';
 import { perioderPerAr } from '../../lib/faktureringsperiod.js';
 import { radensOre } from '../../lib/radobservation.js';
 import { detectForensicFindings } from '../../lib/forensics.js';
+import { catLabel } from '../../lib/format.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
 import { computeShelfware } from '../../lib/shelfware.js';
 import { saasFinanceRightsizing } from '../../lib/saas-finance-rightsizing.js';
@@ -41,6 +42,15 @@ import { loneadminRecommendation } from '../../lib/loneadmin-rightsizing.js';
 import { detectAdobePlan, adobeRightsizing, adobeListExVat, deriveAdobeSeats } from '../../lib/adobe-rightsizing.js';
 import { detectStorageSubstitution } from '../../lib/saas-substitution.js';
 import { kundensMotivering, kundensSteg } from '../../lib/kundmeningar.js';
+
+// Planvalsgrindens mening till kunden (grundarbeslut 2026-11-04). Inga tal: den säger varför ingen
+// besparing räknas, och den är sann för varje faktura grinden når (PG-01).
+export const PLANVALS_MENING = 'Vi jämför inte era mobilabonnemang mot det billigaste publicerade abonnemanget, '
+  + 'eftersom vi inte vet vilket abonnemang ni har. Ett billigare abonnemang kan vara en annan produkt, med mindre '
+  + 'surf eller färre tjänster.';
+// Läggs efter planvalsmeningen när fakturavägen själv läst en bredbandsdel (`secondaryComponentMonthly`).
+// Meningen lovar ingenting om framtiden: delen prissätts inte förrän den byggs som egen del (FV-A4).
+export const BREDBAND_EJ_PRISSATT = 'Bredbandet på samma faktura har vi inte jämfört mot listpris i den här analysen.';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -471,7 +481,8 @@ Kategoriserad faktura:
       : `mobilabonnemang`;
     const _secBenchmarkNote = _secondarySaving
       ? ` ← BENCHMARKAD: p25 = ${_secondarySaving.suggestedAnnual.toLocaleString('sv-SE')} kr/år, bruttobesparing ${_secondarySaving.grossSaving.toLocaleString('sv-SE')} kr/år`
-      : ' ← ej benchmarkad separat';
+      // Här stod att delen inte jämförts separat: falskt där sekundärdelen prövats och föll under tröskeln (O-1).
+      : '';
     const _hasSavingBoth   = _secondarySaving?.grossSaving > 0;
     const _reasoningSecFrag = _secondarySaving
       ? (() => {
@@ -481,7 +492,11 @@ Kategoriserad faktura:
             : `Bredbandskomponenten är marknadsmässig.`;
           return `Fakturan innehåller även ${_secLabel} (${_secCostFmt} kr/år) — ${_action}`;
         })()
-      : `Övriga tjänster (${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr+) analyseras via Fortnox/Visma.`;
+      // Utan sekundär besparing bär modellens text inget tal för resten (Fables beslut 13 nov, fjärde blockeringen).
+      // Resten redovisas inte heller i fakturavyn: den ströks 14 nov (X-1, byggregeln), eftersom «Ni betalar idag» är fel
+      // med en avbetalning typad som hårdvara. Här stod först ett löfte om Fortnox eller Visma (N-2), sedan att vi inte
+      // jämfört (O-1), sedan ett tal som räknades annorlunda än vyns (P-1).
+      : '';
     const _secActionInstruction = _hasSavingBoth
       ? `KRITISKT: Bredbandskomponenten har en besparing mot verifierat listpris. Skriv reasoning som tydligt anger att BÅDE mobilkomponenten (primär) OCH bredbandskomponenten (sekundär) åtgärdas — formulera detta som en åtgärd kunden kan ta ("vi kan förbereda även bredbandsbytet" — uppsägning och nyteckning gör kunden själv), ALDRIG som "bevaka vid nästa förnyelse". Texten EXAKT: `
       : `KRITISKT: Ange i reasoning EXAKT `;
@@ -489,8 +504,9 @@ Kategoriserad faktura:
   OBS KOMBINERAT FAKTURA — fakturan innehåller tjänster i FLERA kategorier:
     Primär komponent (${categorized.category}): ${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år ← DETTA är jämförelsebasen för primärbesparingen${mobileAddonAnnual ? `
     Tilläggstjänster (molnväxel/PBX): ${mobileAddonAnnual.toLocaleString('sv-SE')} kr/år` : ''}
-    Sekundär komponent (${_secLabel}): ${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år${_secBenchmarkNote}
-  ${_secActionInstruction}"Kombinerat faktura — analysen avser ${categorized.category}abonnemang (${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år). ${_reasoningSecFrag}" — fortsätt sedan med din analys av primärkomponenten. Använd INGA interna mätvärden (p25, percentil, procentsatser) i reasoning.`;
+${_secondarySaving ? `
+    Sekundär komponent (${_secLabel}): ${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år${_secBenchmarkNote}` : ''}
+  ${_secActionInstruction}"Kombinerad faktura. ${(() => { const e = catLabel(categorized.category); return e.charAt(0).toUpperCase() + e.slice(1); })()}: ${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år.${_reasoningSecFrag ? ` ${_reasoningSecFrag}` : ''}" — fortsätt sedan med din analys av primärkomponenten. Använd INGA interna mätvärden (p25, percentil, procentsatser) i reasoning.`;
   })() :
   mobileAddonAnnual ? `
   Varav mobilabonnemang: ${(annualCost - mobileAddonAnnual).toLocaleString('sv-SE')} kr/år
@@ -1560,7 +1576,7 @@ function storageSubstitutionResponse(sub) {
 // besparingen var 3 414 kr av 97 531 = 3,5 %, alltså i samma storleksordning som ett kursfel på
 // några procent. Fail-closed på PÅSTÅENDET, fail-open på pipelinen (FX-15, motprov i samma test).
 export async function recommend(input, opts = {}) {
-  const svar = await recommendUtanValutagrind(input, opts);
+  const svar = planvalsgrind(input, await recommendUtanValutagrind(input, opts));
   if (!input?.fxSparr || !svar || typeof svar !== 'object') return svar;
   console.warn(`[guard:fx] ${input.fxSparr} — besparingspåståendet rivs: en kurs vi inte kan datera `
     + 'får inte bära kundens pengar');
@@ -1573,6 +1589,57 @@ export async function recommend(input, opts = {}) {
     suggestedAnnualCost: null,
     suggestedSupplier: null,
     fxSparr: input.fxSparr,
+    // Mains byte går också genom valutagrinden (sextonde blicken på S1, Ö-1). Spridningen ovan kopierar symbolen,
+    // så utan den här raden prövade sanitetsvakten ett byte som valutagrinden just rivit, och en mobilfaktura i EUR
+    // med en kurs som inte är färsk gick till granskning där main analyserar den (FV-A20).
+    ...(svar[OGRINDAT_BYTE] ? { [OGRINDAT_BYTE]: { ...svar[OGRINDAT_BYTE], shouldSwitch: false, savingPerYear: null,
+      suggestedAnnualCost: null } } : {}),
+  };
+}
+
+// ══ PLANVALSGRINDEN (grundarbeslut 2026-11-04, «stäng av vid källan»; flyttad hit 2026-11-11) ══════
+// I en kategori där bytesmålet är kategorins golv (`bytesmalMotKategorigolv`, i dag mobil) mäter golvet
+// planvalet, inte priset: 349-planen till exakt listpris fick «byte till 269» och 9 600 kr, en nedgradering
+// räknad som besparing. Ingen kod läser i dag kundens abonnemang ur fakturan, så inget byte räknas.
+//
+// Grinden satt förut inne i den deterministiska grenen, som bara nås när modellen svarat ja och en
+// primärkomponent finns. Modellens nej och en kombinerad faktura utan primärkomponent gick runt den
+// (sjätte blicken, H1-1 och H1-4). Nu är den ett hölje runt varje returväg, samma form som
+// valutagrinden, och den slår till oavsett vad modellen svarade (FV-A1, PG-01).
+//
+// Poängen nollas också: den räknades mot kategorins golv, alltså mot samma planval (FV-A5).
+export const OGRINDAT_BYTE = Symbol('ogrindatByte');
+
+export function planvalsgrind(input, svar) {
+  if (!svar || typeof svar !== 'object') return svar;
+  if (BRANCHINDEX[input?.categorized?.category]?.bytesmalMotKategorigolv !== true) return svar;
+  console.log(`[planvalsgrind] ${input.categorized.category}: bytesmålet vore kategorins golv utan bekräftat abonnemang → inget bytestal (fail-closed)`); // PG-01, FV-A1
+  const bredband = (Number(input?.invoice?.secondaryComponentMonthly) || 0) > 0;
+  return {
+    ...svar,
+    shouldSwitch: false,
+    recommendationType: 'no_action',
+    suggestedAnnualCost: null,
+    suggestedSupplier: null,
+    savingPerYear: 0,
+    healthScore: null,
+    savingsBreakdown: null,
+    planvalsgrind: 'bytesmålet vore kategorins billigaste produkt, och kundens produkt är inte bekräftad',
+    // MAINS PRÖVNING STÅR KVAR UNDER GRINDEN (femtonde blicken på S1, Å-1; bibelns regel 13: en ny prövning läggs
+    // ovanpå mains, aldrig i stället för den). Bytet grinden nollar är det tal sanitetsvakten i api/test-invoice.mjs
+    // prövade på main. Utan det gick 18 kombinerade mobilfakturor som main höll i granskning `auto`, och varje
+    // förexisterande fel på dem blev vanligare (Y-1, Z-2, Å-1). Talet bärs under en symbolnyckel: det följer med
+    // varje spridning av objektet men serialiseras aldrig (OG-01). Svaret till kunden byggs i dag ur en uttrycklig
+    // fältlista (api/test-invoice.mjs, `recommendation: {`), så ett vanligt fält hade inte heller nått svaret; symbolen
+    // är skyddet för cachen, raden och en framtida spridning, och genom handlern syns den inte (SB2 fällde bara OG-01).
+    // FV-A20 prövar routningen.
+    [OGRINDAT_BYTE]: {
+      shouldSwitch: svar.shouldSwitch === true,
+      savingPerYear: svar.savingPerYear ?? null,
+      suggestedAnnualCost: svar.suggestedAnnualCost ?? null,
+    },
+    // Modellens egen prosa får inte erbjuda bytet grinden just stoppat: texten skrivs av koden (FV-A4).
+    reasoning: bredband ? `${PLANVALS_MENING} ${BREDBAND_EJ_PRISSATT}` : PLANVALS_MENING,
   };
 }
 
@@ -2272,6 +2339,7 @@ async function recommendUtanValutagrind(input, opts = {}) {
     // Vad som INTE tystnar: rätt-storlek (m365Rightsizing), licensrensning (shelfware) och
     // kontraktsklockan räknas fristående och lever kvar. Det enda som faller bort är påståendet
     // "byt leverantör och spara X" när vi inte kan visa X per rad.
+    // Planvalsgrinden bodde här till 11 nov; den är nu höljet `planvalsgrind` runt hela recommend().
     if (isSaasProductivity && !_useLfl) {
       console.log('[lfl-grind] saas-productivity utan like-for-like-underlag → inget bytestal (fail-closed)');
       result.shouldSwitch = false;

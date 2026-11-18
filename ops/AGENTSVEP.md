@@ -90,8 +90,8 @@ resten efter återställningen. Domskrivaren startar först när de obligatorisk
 
 > **Utlösare:** grundaren skriver *«Kör ett fabrikssvep»*. Då körs steg 1–4 nedan i följd, utan
 > att fråga mellan stegen. Svepet är klart när protokollets fyra steg är gjorda, vakterna är gröna
-> och en PR ligger redo med Grindens fyra kontroller gröna. **Agenten mergar aldrig.** Grundaren
-> klickar merge.
+> och PR:en är mergad genom Grindens fyra kontroller. **Agenten mergar genom Grinden** (CTO-mandatet
+> 22 okt). Hur en PR drivs från plan till driftsatt merge står i `ops/BYGGARRUTIN.md` (11 nov).
 
 Svepet ärver allt ovan (kanariefågel, vågor, skörd) och allt i bibeln. Det ersätter ingen regel.
 Varje påstående i svepets rapport skrivs i en av noll-inferensens tre former: avläst (med
@@ -105,6 +105,9 @@ export GH_TOKEN="$(printf 'protocol=https\nhost=github.com\n\n' | git credential
 # … gh-kommandona …
 unset GH_TOKEN
 ```
+
+Blocket ovan gäller grundarens lokala klon. En molnsession har inget `gh`: där går allt mot GitHub
+genom MCP-verktygen (`mcp__github__*`), och arbetsflöden startas med `actions_run_trigger`.
 
 `.verktyg/` ligger i `.git/info/exclude`. Saknas katalogen: ladda ner node och gh igen och
 kontrollera checksumman. Token, nycklar och miljövärden skrivs aldrig ut, inte heller i en logg.
@@ -151,8 +154,9 @@ kontrollera checksumman. Token, nycklar och miljövärden skrivs aldrig ut, inte
 1. Ta nästa oavslutade punkt i statustabellen från steg 1 och bygg den fullt ut: syskonfall körda,
    varje sabotage skrivet med `assert old in s` och fällande, test-ID som testtitel, regel 8
    (skärmdump 390 och 1600 px) när en yta ändras.
-2. Är nästa punkt ett grundarbeslut: skriv beslutet och alternativen i rapporten, och ta nästa
-   tekniska punkt. Är ordern helt avslutad: markera den avslutad med bevis i tabellen, och ta den
+2. Är nästa punkt ett vägval: fatta beslutet enligt CTO-mandatet och skriv skälet i commiten. Kräver
+   punkten något bara grundaren kan göra (hemlighet, repoinställning, leverantörskonto): skriv åtgärden
+   i körplanen och ta nästa tekniska punkt. Är ordern helt avslutad: markera den avslutad med bevis i tabellen, och ta den
    högst rankade punkten under «Känd skuld» i bibeln som inte väntar på ett grundarbeslut.
 3. En DRIFT-lagning i prisboken eller villkorsboken är steg 2, inte steg 3. Den räknas inte som
    framåtdrift.
@@ -179,12 +183,14 @@ kontrollera checksumman. Token, nycklar och miljövärden skrivs aldrig ut, inte
 5. Pusha grenen, öppna PR:en och läs de fyra kontrollerna (Sviten, Vakterna, Commitkravet, Andra
    blicken). Ett rött lagas med en ny commit. En pushad commit skrivs aldrig om.
 
-### När svepet stannar och frågar grundaren
+### Svepet stannar inte och frågar inte
 
-Bara här: moms, pris, juridik eller publicering av villkor; radering av data; körning av
-`scripts/stress-test.mjs`; nycklar, rulesets och repoinställningar; merge till `main`; och en
-[KUND]-lagning som kräver ett produktbeslut. Allt annat avgörs ur koden, och beslutet motiveras i
-rapporten.
+Listan över lägen där svepet stannade och frågade grundaren ersattes 22 okt av CTO-mandatet och 11 nov
+av byggarrutinen (`ops/BYGGARRUTIN.md`, avsnitt 6). Varje vägval avgörs ur koden, och beslutet motiveras
+i commiten. Det agenten inte kan göra härifrån skrivs som en åtgärd för grundaren: hemligheter,
+rulesets, repoinställningar och leverantörskonton. Tre gränser står kvar: `scripts/stress-test.mjs` körs
+aldrig utan uttryckligt OK, en hemlighet skrivs aldrig ut, och en ospårad fil som agenten inte skapat
+committas aldrig.
 
 ### Rapporten
 

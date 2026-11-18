@@ -142,8 +142,9 @@ describe('SA · analysmejlet renderar efter läget', async () => {
   process.env.RESEND_API_KEY ??= 're_test_inte_skarp';
   const { htmlEmail, generatePdf, mejlLage } = await import('../api/send-analysis.mjs');
   const text = (h) => h.replace(/<!--[\s\S]*?-->/g, '').replace(/<style[\s\S]*?<\/style>/g, '').replace(/<[^>]+>/g, ' ').replace(/&rarr;/g, '→').replace(/\s+/g, ' ');
-  const ingetByte = { extracted: { supplier: 'Tele2', annualCost: 12000 }, categorized: { category: 'mobil' }, recommendation: { shouldSwitch: false, reasoning: 'Ni ligger rätt.' } };
-  const byte = { extracted: { supplier: 'Telia', annualCost: 12000 }, categorized: { category: 'mobil' },
+  // Bredband, inte mobil: en mobilfaktura utan byte har sitt eget besked sedan S1 (11 nov), prövat i SA-01b.
+  const ingetByte = { extracted: { supplier: 'Tele2', annualCost: 12000 }, categorized: { category: 'bredband' }, recommendation: { shouldSwitch: false, reasoning: 'Ni ligger rätt.' } };
+  const byte = { extracted: { supplier: 'Telia', annualCost: 12000 }, categorized: { category: 'bredband' },
     recommendation: { shouldSwitch: true, suggestedAnnualCost: 9000, grossSaving: 3000, netSaving: 2400, arvoFee: 600, reasoning: 'x' } };
 
   test('SA-01 · utan byte: ingen «+0 kr», inget Arvo-pris, inget «tror du kan spara»', () => {
@@ -152,6 +153,16 @@ describe('SA · analysmejlet renderar efter läget', async () => {
     assert.doesNotMatch(t, /\+0 kr|Arvo-pris|→ 0 kr|tror du kan spara/);
     assert.match(t, /Inget byte att rekommendera/);
     assert.match(t, /inget verifierat jämförelsepris/, 'omätt ska sägas som omätt');
+  });
+
+  test('SA-01b · en mobilfaktura utan byte säger att produkten är okänd, aldrig att priset saknas', async () => {
+    const { PLANVAL_BESKED } = await import('../lib/lagesregister.js');
+    const mobil = { ...ingetByte, categorized: { category: 'mobil' } };
+    assert.equal(mejlLage(mobil).rubrik, 'planval');
+    const t = text(htmlEmail(mobil));
+    assert.ok(t.includes(PLANVAL_BESKED.text), 'planvalsbeskedet saknas');
+    assert.doesNotMatch(t, /inget verifierat jämförelsepris|Inget byte att rekommendera/);
+    assert.ok((await generatePdf(mobil)).length > 1000, 'PDF:en byggdes inte');
   });
 
   test('SA-02 · med byte: besparingen står kvar (motprovet)', () => {

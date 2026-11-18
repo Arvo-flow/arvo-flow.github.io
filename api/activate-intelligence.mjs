@@ -154,6 +154,10 @@ export function buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, n
   const dc      = matt ? diagColors(Number(diagScore)) : { dot: '#9CA3AF', bg: '#F3F4F6', labelClr: '#4B5563' };
   const score   = matt ? Number(diagScore) : '–';
   const label   = matt ? diagnosEtikett(Number(diagScore), { overMarketPct: overMarketPctAv(annualCost, suggestedAnnualCost) }) : 'Inte mätt';
+  // Besparingsrutan står bara över ett byte. Utan ett stod «Möjlig nettobesparing +0 kr/år · 45 456 → – kr/år
+  // · Arvos arvode 0 kr» i varje mejl om en faktura utan byte, också för varje mobilfaktura, där inget
+  // jämfördes (FV-A11).
+  const harBesparing = (Number(netSaving) || 0) > 0;
 
   return `<!DOCTYPE html>
 <html lang="sv">
@@ -196,11 +200,11 @@ export function buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, n
 ${diagInsight ? `<p style="font-size:13.5px;color:#3D5249;margin:14px 0 0;line-height:1.6;">${diagInsight}</p>` : ''}
 </td></tr>
 
-<tr><td style="padding:24px 36px;background:#F0FDF9;border-bottom:1px solid #D5E2DC;">
+${harBesparing ? `<tr><td style="padding:24px 36px;background:#F0FDF9;border-bottom:1px solid #D5E2DC;">
 <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#047857;margin:0 0 8px;">Möjlig nettobesparing</p>
 <p style="font-size:40px;font-weight:800;color:#0E1A17;margin:0 0 8px;letter-spacing:-.03em;line-height:1;">+${fmt(netSaving)}&nbsp;<span style="font-size:18px;font-weight:400;color:#5C6E68;">kr/&aring;r</span></p>
 <p style="font-size:13px;color:#5C6E68;margin:0;">${fmt(annualCost)} &rarr; ${fmt(suggestedAnnualCost)} kr/&aring;r &middot; Arvos arvode ${fmt(arvoFee)} kr (20&nbsp;%)</p>
-</td></tr>
+</td></tr>` : ''}
 
 ${reasoning ? `<tr><td style="padding:24px 36px;border-bottom:1px solid #EEF4F2;">
 <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#8A9E98;margin:0 0 12px;">Arvos bed&ouml;mning</p>

@@ -10,7 +10,7 @@
 import { kundensMotivering, UNDERLAGET } from '../lib/kundmeningar.js';
 import { Resend } from 'resend';
 import { createRequire } from 'module';
-import { fakturaLage } from '../lib/lagesregister.js';
+import { fakturaLage, PLANVAL_BESKED } from '../lib/lagesregister.js';
 import { RATTSTORLEK_FALT } from '../lib/rattstorleksfynd.js';
 
 // ── LÄGET AVGÖR LAYOUTEN (Lägesregistret 2026-09-23) ─────────────────────────────────────────
@@ -133,7 +133,8 @@ function drawLogoMark(doc, ox, oy, size) {
 //  - Logo mark and wordmark share exact vertical center
 
 export function generatePdf(result) {
-  const { harByte, matt } = mejlLage(result);
+  const { harByte, matt, rubrik } = mejlLage(result);
+  const planval = rubrik === 'planval';
   return new Promise((resolve, reject) => {
     const { extracted: ex, categorized: cat, recommendation: r } = result;
     const suppDisplay = displayedSupplier(cat, r);
@@ -206,9 +207,9 @@ export function generatePdf(result) {
     } else {
       // Inget byte: ingen «+0 kr», inget «Arvo-pris 0 kr/år» (mätt i översynen, SA-02).
       doc.fontSize(8).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.60)')
-        .text('INGET BYTE ATT REKOMMENDERA', PAD, y + 16, { characterSpacing: 1.4 });
+        .text(planval ? PLANVAL_BESKED.rubrik.replace(/\.$/, '').toUpperCase() : 'INGET BYTE ATT REKOMMENDERA', PAD, y + 16, { characterSpacing: 1.4 });
       doc.fontSize(12).font('Helvetica').fillColor(T.surface)
-        .text(matt
+        .text(planval ? PLANVAL_BESKED.text : matt
           ? 'Vi jämförde er faktura mot verifierat publikt listpris och hittade inget byte vi kan belägga.'
           : 'Vi har inget verifierat jämförelsepris för den här fakturan i dag, så vi säger inget om er prisnivå.',
           PAD, y + 36, { width: W });
@@ -316,7 +317,8 @@ function logo(size, id) {
 
 export function htmlEmail(result) {
   const { extracted: ex, categorized: cat, recommendation: r } = result;
-  const { harByte, matt } = mejlLage(result);
+  const { harByte, matt, rubrik } = mejlLage(result);
+  const planval = rubrik === 'planval';
   const catLabel    = CATEGORY_LABELS[cat?.category] ?? cat?.category ?? '';
   const suppDisplay = displayedSupplier(cat, r);
   const isRealPrice = REAL_PRICE_CATEGORIES.has(cat?.category);
@@ -398,9 +400,9 @@ export function htmlEmail(result) {
         ${formatKr(ex.annualCost)} &rarr; ${formatKr(r.suggestedAnnualCost)}/år
         ${suppDisplay ? ` hos <strong style="color:rgba(255,255,255,0.92);font-weight:600">${suppDisplay}</strong>` : ''}
       </p>` : `
-      <p style="margin:0 0 18px;font-size:11px;font-weight:700;color:rgba(255,255,255,0.60);text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">Inget byte att rekommendera</p>
+      <p style="margin:0 0 18px;font-size:11px;font-weight:700;color:rgba(255,255,255,0.60);text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">${planval ? PLANVAL_BESKED.rubrik.replace(/\.$/, '') : 'Inget byte att rekommendera'}</p>
       <p style="margin:0;font-size:16px;color:#ffffff;line-height:1.7;font-family:'Inter',Arial,sans-serif">
-        ${matt
+        ${planval ? PLANVAL_BESKED.text : matt
           ? 'Vi jämförde er faktura mot verifierat publikt listpris och hittade inget byte vi kan belägga.'
           : 'Vi har inget verifierat jämförelsepris för den här fakturan i dag, så vi säger inget om er prisnivå.'}
       </p>`}

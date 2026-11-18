@@ -15,6 +15,7 @@ import { getCategoryMeta } from '../../lib/categoryMeta';
 // ordalydelsen per kod (src/lib/rumstext.js för raderna, DOMTEXT nedan för domen). LR-01..08.
 import { radarRader } from '../../lib/holdings';
 import { radMotivering, radMarke } from '../../lib/rumstext';
+import { valjAnkare } from '../../lib/ankarval';
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
 import AccountBar from '../../components/AccountBar';
@@ -625,16 +626,10 @@ export default function Portfolio() {
   // verifierat publikt listpris (BRANCHINDEX, real-public). Tydligt branschestimat — ALDRIG en
   // kundjämförelse (enheten är per användare/abonnemang, kundens totalposition bor i innehavskortet).
   // Ersätts av den verkliga kohorten i samma yta så fort nätverksvolymen bär den.
+  // Valet, med spärren för kategorier som kräver bekräftad nivå, bor i src/lib/ankarval.js (MS-06).
   const branchAnchor = useMemo(() => {
     if (featured || publicFeatured) return null;
-    let best = null;
-    for (const g of suppliers) {
-      const an = branchAnchors[g.latest.category];
-      if (!an || !(an.median > 0)) continue;
-      const material = an.customerCost ?? 0;
-      if (!best || material > best._material) best = { ...an, _material: material };
-    }
-    return best;
+    return valjAnkare(suppliers, branchAnchors);
   }, [featured, publicFeatured, suppliers, branchAnchors]);
 
   // ── TÄCKNINGSPÅSTÅENDET (grundarbeslut 2026-09-11, ur Fable 5.1:s dom) ────────────────────
@@ -687,6 +682,9 @@ export default function Portfolio() {
   // [KUND]-haveri. Härledningen hör hemma efter sina beroenden, aldrig bredvid sitt ämne.
   const domLage = rum?.lage ?? null;
   const omatt = rum?.omatt === true;
+  // `rum.ovissa`: minst en faktura har obekräftad nivå och ingen dom, så rummet sätter ingen samlad
+  // poäng (C1-2). Texterna säger då «vi kan inte bedöma allt ni betalar», sant oavsett resten (MS-09).
+  const ovissa = rum?.ovissa === true;
 
   // Vaktens kvitton (arbetets kvitton) — vad maskinen GJORDE, byggt strikt ur verkligt rumsdata.
   // Inga mock-rader (det var Kontoret-prototypens synd): varje rad är sann eller utelämnas.
@@ -797,10 +795,16 @@ export default function Portfolio() {
     },
     lugn_omatt: {
       h1: 'Vi vaktar era avtal.',
-      head: nivaer > 0
+      head: ovissa
+        ? <>Vi vaktar era avtal — men <em>en samlad position mot listpris</em> sätter vi inte i dag.</>
+        : nivaer > 0
         ? <>Inget byte att lägga fram — men <em>{nivaer} {plural(nivaer, 'avtal', 'avtal')} kan gå ner en nivå.</em></>
         : <>Vi vaktar era avtal — men <em>er position mot listpris kunde inte mätas</em> i dag.</>,
-      work: <>Vi har ännu <b>inget verifierat jämförelsepris</b> för det ni själva betalar — därför hävdar vi
+      work: ovissa
+        // Inget «Inget byte rekommenderas i dag» här: en rad kan bära ett byte vi håller inne (MS-13).
+        ? <>{jamforde}Vi kan inte bedöma allt ni betalar mot listpris än, så vi sätter <b>ingen samlad poäng</b> och
+            hävdar ingenting om er samlade prisnivå.{nivaMening}</>
+        : <>Vi har ännu <b>inget verifierat jämförelsepris</b> för det ni själva betalar — därför hävdar vi
             ingenting om er prisnivå.{nivaMening ?? ' Vi bevakar avtalen och hör av oss så snart ett mål går att styrka.'}</>,
     },
     byte_battre: {
@@ -820,7 +824,8 @@ export default function Portfolio() {
     },
     byte_omatt: {
       h1: 'Ett par drag väntar på er.',
-      head: <><em>{antalByten} avtal kan skärpas</em> mot verifierat listpris.</>,
+      // Ingen källa i rubriken: läget nås också med ett elbyte, räknat mot Arvos eget index (F1-1).
+      head: <><em>{antalByten} avtal kan skärpas.</em></>,
       work: null,
     },
     fynd: {
@@ -1008,6 +1013,11 @@ export default function Portfolio() {
               <Confidence>
                 {acting && !hasSwitchAction
                   ? <><span className="pct">Ur er egen faktura</span> · talet står på raden i fyndet ovan · inget marknadspris inblandat</>
+                  // Ett byte bär domen också när ingen samlad poäng sätts: talet är bytesmålet (D1-2).
+                  : omatt && hasSwitchAction
+                    ? <><span className="pct">Ingen samlad poäng</span> · {counts.prissatta > 0 ? `${counts.prissatta} av ${counts.fakturor} fakturor prissatta mot publika listpriser` : 'bytena står på raderna'}</>
+                  : omatt && ovissa
+                    ? <><span className="pct">Ingen samlad poäng</span> · {counts.prissatta > 0 ? `${counts.prissatta} av ${counts.fakturor} fakturor prissatta mot publika listpriser` : 'vi kan inte bedöma allt ni betalar mot listpris än'}</>
                   : omatt
                     ? <><span className="pct">Inte mätt i dag</span> · vi har inget verifierat jämförelsepris för det ni själva betalar · vi hävdar ingenting om er prisnivå</>
                     : counts.prissatta > 0
@@ -1045,7 +1055,10 @@ export default function Portfolio() {
                   <span className={standing.niva === 'battre' ? 'on' : ''}>Bättre</span>
                 </div>}
                 <p className="idx-note">
-                  {!standing.satt
+                  {!standing.satt && ovissa
+                    ? <>Vi kan inte bedöma allt ni betalar mot listpris än, så vi sätter ingen samlad poäng.
+                      <b> Ett tal över en del av boken läses som ett omdöme om hela.</b></>
+                    : !standing.satt
                     ? <>Vi har inget verifierat jämförelsepris för det ni själva betalar ännu, så vi sätter ingen poäng.
                       <b> Ett tal utan mätning är värre än inget tal.</b> Så snart ert eget pris går att ställa
                       mot ett verifierat listpris räknas det fram — och ni ser exakt hur.</>
@@ -1085,7 +1098,9 @@ export default function Portfolio() {
                     ? <><b>{antalByten} byte{antalByten > 1 ? 'n' : ''} förberedda</b> · netto efter Arvos arvode (20% av första årets besparing). Från år två är hela besparingen er.</>
                     : acting
                       ? <>Inget leverantörsbyte krävs — kostnaden åtgärdas direkt mot fakturan. Se fyndet ovan.</>
-                      : (omatt
+                      : (omatt && ovissa
+                          ? <>Vi kan inte bedöma allt ni betalar mot listpris än, så vi sätter ingen samlad poäng.</>
+                          : omatt
                           ? <>Vi har inget verifierat jämförelsepris för det ni själva betalar än, så vi hävdar ingenting om
                               er prisnivå. Vi håller dem under uppsikt — och hör av oss så snart ett mål går att styrka.</>
                           : domLage === 'lugn_over_golvet'
@@ -1476,20 +1491,26 @@ export default function Portfolio() {
                                 </span>
                                 <span className="u-bel">{fmtNum(p.golv)} kr</span>
                               </div>
-                              {p.median > 0 && p.median !== p.golv && (
+                              {p.medianEtikett && p.median > 0 && p.median !== p.golv && (
                                 <div className="u-rad">
-                                  <span className="u-txt">Samma licens utan bindning</span>
+                                  <span className="u-txt">{p.medianEtikett}</span>
                                   <span className="u-spec">samma källa</span>
                                   <span className="u-bel">{fmtNum(p.median)} kr</span>
                                 </div>
                               )}
                               <div className={`u-slut${p.underGolv ? ' bra' : ''}`}>
-                                {p.ovissNiva
-                                  ? <>Vad ni betalar och vad den billigaste jämförbara licensen
+                                {/* En rad med obekräftad nivå och ett byte som står kvar. Här stod «Vi sätter varken
+                                    avstånd eller poäng här» bredvid radens poäng och byte (E1-5), och sedan en mening
+                                    om vad bytet är räknat mot, som var falsk för rader utan radtext (F1-3). Nu säger
+                                    texten bara det som gäller alla sådana rader (MS-11). */}
+                                {p.ovissNiva && a.lage?.kod === 'byte'
+                                  ? <>Hur långt ni ligger från <b>det billigaste priset i kategorin</b> säger vi inget om,
+                                     eftersom produkterna i kategorin har olika listpris.</>
+                                  : p.ovissNiva
+                                  ? <>Vad ni betalar och vad den billigaste jämförbara produkten
                                      kostar står ovan. <b>Hur långt ifrån ni ligger kan vi inte
-                                     säga</b> förrän vi vet vilken nivå ni har — priserna i den
-                                     här kategorin skiljer nästan tio gånger mellan billigaste och
-                                     dyraste. Dela avtalet, så låser vi jämförelsen.</>
+                                     säga</b> förrän vi vet vilken produkt ni har, eftersom
+                                     produkterna i kategorin har olika listpris.</>
                                   : p.nivaBekraftad
                                   ? (p.underGolv
                                     ? <>Ni ligger <b>{Math.abs(p.avstandPct)} % under</b> listpriset för
@@ -1507,14 +1528,18 @@ export default function Portfolio() {
                                   ? <>Er licensnivå är läst ur fakturans egen radtext, så jämförelsen gäller
                                      samma produkt. Scoren mäts mot det priset — inte mot vad andra bolag
                                      faktiskt betalar.</>
+                                  : p.ovissNiva && a.lage?.kod === 'byte'
+                                  ? <>Ett avstånd till det billigaste priset i kategorin hade mätt vilken produkt ni
+                                     valt, inte vad ni betalar för den.</>
                                   : p.ovissNiva
-                                  ? <>Vi sätter varken avstånd eller poäng här. Priserna i kategorin skiljer
-                                     nästan tio gånger mellan billigaste och dyraste licens, så ett tal mot
-                                     det billigaste hade mätt vilken produkt ni valt — inte vad ni betalar
-                                     för den. Med avtalet i handen blir jämförelsen exakt.</>
+                                  ? <>Vi sätter varken avstånd eller poäng här. Ett tal mot det billigaste
+                                     hade mätt vilken produkt ni valt, inte vad ni betalar för den.</>
                                   : <>Jämförelsen görs mot den billigaste jämförbara produkten. Scoren mäts
                                      mot priset ovan, inte mot vad andra bolag faktiskt betalar.</>}
-                                {' '}Den jämförelsen kommer när fler i er bransch delar sina fakturor.
+                                {/* «Den jämförelsen» syftar på vad andra bolag betalar, som bara de två andra
+                                    grenarna nämner. Efter den obekräftade grenen hade den syftat på talet mot
+                                    det billigaste priset (MS-04). */}
+                                {!p.ovissNiva && <>{' '}Den jämförelsen kommer när fler i er bransch delar sina fakturor.</>}
                               </p>
                             </Underlag>
                           );

@@ -9,7 +9,7 @@ import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { formatKr, genitiv, krPerAr } from '../../utils/format';
 import { grindPausad } from '../../utils/grindpaus';
-import { ANALYSRUBRIKER, diagnosMening, UTAN_VERIFIERAT_PRIS } from '../../lib/diagnos';
+import { ANALYSRUBRIKER, diagnosMening, UTAN_VERIFIERAT_PRIS, sidrubrik } from '../../lib/diagnos';
 import { PRISAVVIKELSE_RUBRIK, PRISAVVIKELSE_MENING, PRISAVVIKELSE_SLUT } from '../../lib/prisavvikelse';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { redigeraLeverantor, samaLeverantor } from '../../lib/leverantorsnamn';
@@ -997,6 +997,7 @@ const TestaFaktura = () => {
   // «Kritisk 0 /100» (mätt i översynen). Läget räknas nu en gång i api-lagret
   // (lib/lagesregister.js fakturaLage) och vyn renderar det. Utan mätning finns ingen etikett.
   const _lage       = result?.lage ?? null;
+  const _sidrubrik  = sidrubrik(result);
   const _diag       = _lage ?? { matt: false, score: null, ovPct: 0, overMarketPct: 0, skal: 'fakturans läge saknades i svaret', etikett: null };
   // "Över marknadspris" = (pris − mål)/mål — ALDRIG andel-av-priset (Svea/85-felet är låst).
   const diagMatt    = _diag.matt;
@@ -1122,11 +1123,9 @@ const TestaFaktura = () => {
 
       <Hero>
         <Eyebrow><span className="dot" /> Arvo Intelligence · Analys på 60 sekunder</Eyebrow>
-        <Headline>Ni betalar för mycket. <em>En</em> faktura bevisar det.</Headline>
-        <Lede>
-          Arvo Intelligence jämför er faktura mot verifierade publika listpriser och visar
-          exakt vad ni betalar för mycket — och hos vem ni kan spara.
-        </Lede>
+        {/* Q-7: rubriken följer resultatets läge (src/lib/diagnos.js SIDRUBRIK, FV-A10). */}
+        <Headline>{_sidrubrik.rubrik}{_sidrubrik.betoning ? <> <em>{_sidrubrik.betoning}</em>{_sidrubrik.rest}</> : null}</Headline>
+        <Lede>{_sidrubrik.lede}</Lede>
       </Hero>
 
       <Body>
@@ -1972,7 +1971,12 @@ const TestaFaktura = () => {
                     Frågan ställs EN gång, ur `NIVASANKNINGSKORT` som korten själva läser (regel 1),
                     så ett framtida kort inte kan återinföra motsägelsen i tysthet (AR-04). */}
                 <NoSwitchBlock style={{ marginTop: 0 }}>
-                  {_lage?.rubrik === 'inget_byte_med_nivasankning' ? (
+                  {_lage?.rubrik === 'planval' ? (
+                    <>
+                      <strong>{ANALYSRUBRIKER.planval.rubrik}</strong>{' '}
+                      {ANALYSRUBRIKER.planval.text}
+                    </>
+                  ) : _lage?.rubrik === 'inget_byte_med_nivasankning' ? (
                     <>
                       <strong>{ANALYSRUBRIKER.inget_byte_med_nivasankning.rubrik}</strong>{' '}
                       {ANALYSRUBRIKER.inget_byte_med_nivasankning.text}
@@ -2039,7 +2043,8 @@ const TestaFaktura = () => {
 
             {detailsOpen && <>
 
-            {result.route === 'auto' && !result.categorized?.licensePending && !(result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 && !isOptimize) && (
+            {/* Inte på en planvalsfaktura: där baseras inget pris på något, och inget byte finns (K-3). */}
+            {result.route === 'auto' && !result.categorized?.licensePending && result.lage?.rubrik !== 'planval' && !(result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 && !isOptimize) && (
               <PriceNote>
                 {_effectiveMeta.benchmarkType === 'list-verified'
                   ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Vid genomfört byte bekräftas slutpriset i offert innan ni godkänner.'
@@ -2075,14 +2080,16 @@ const TestaFaktura = () => {
                   </>
                 ) : (
                   <>
-                    Kombinerad faktura — analysen avser{' '}
-                    {getCategoryMeta(result.categorized?.category).label}
-                    {result.extracted?.primaryComponentMonthly != null
-                      ? ` (${formatKr(result.extracted.primaryComponentMonthly * 12)}/år)`
+                    {/* Bara primärdelens tal (Fables beslut 13 nov och byggregeln). Resten stryks: «Ni betalar idag»
+                        är fel när en avbetalning typad som hårdvara dras av fast den aldrig ingick (X-1, egen PR), så
+                        ingen differens av två tal i vyn ger rätt rest. Talet för hela fakturan står under «Ni betalar idag».
+                        På en planvalsfaktura stryks också P (Y-1, byggregeln): P räknas som om radbeloppen gällde en
+                        månad, så en kvartals- eller årsfaktura fick 3 respektive 12 gånger för stort tal. På main gick
+                        de fakturorna till granskning och P visades aldrig; felet i P för andra kategorier hör till S6. */}
+                    Kombinerad faktura.
+                    {result.extracted?.primaryComponentMonthly != null && result.lage?.rubrik !== 'planval'
+                      ? ` ${getCategoryMeta(result.categorized?.category).label}: ${formatKr(Math.round(result.extracted.primaryComponentMonthly * 12))}/år.`
                       : ''}
-                    {(result.recommendation?.nonPrimaryAnnual ?? 0) > 0
-                      ? `. Övriga tjänster (${formatKr(result.recommendation.nonPrimaryAnnual)}/år) analyseras via Fortnox/Visma.`
-                      : '.'}
                   </>
                 )}
               </p>

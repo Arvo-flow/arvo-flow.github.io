@@ -16,7 +16,7 @@ import { pendingCountBySender, failedCountBySender, failedFilesBySender, intagsf
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
 import { contractClockFinding, avtalsklocka } from '../lib/contract-clock.js';
 import { planeradePaminnelser } from '../lib/paminnelse.js';
-import { radLage, rumLage } from '../lib/lagesregister.js';
+import { radLage, rumLage, undanhallBytePaOvissNiva } from '../lib/lagesregister.js';
 import { rattstorleksKort } from '../lib/rattstorlekskort.js';
 import { buildAvtalView, supplierNamesMatch } from '../lib/contract-intel.js';
 import { priceHikeForecast } from '../lib/price-forecast.js';
@@ -148,14 +148,11 @@ export default async function handler(req, res) {
   // "Bevakat — inte prissatt" (Liggare 2): fakturor vi SÅG men medvetet inte prissatte (triagade).
   // Disciplinmontern — Zero Trust gjort synligt: vi gissar aldrig på utländsk valuta eller en kategori
   // utan verifierat svenskt golv. Inget tyst bortfall (regel 9). Bär källbelagt skäl + väg framåt, noll tal.
-  const TRIAGE_ROUTES = new Set(['unsupported', 'review_queue']);
-  const watched = merged
-    .filter((a) => TRIAGE_ROUTES.has(a.route) || a.triage_reason != null)
-    .map((a) => watchedCard(a));
+  const { triagerade, prissatta } = delaRummet(merged);
+  const watched = triagerade.map((a) => watchedCard(a));
 
   // Liggare 1 (prissatt): bara riktiga analyser driver score/innehav/kohort — triagade hålls utanför.
-  const analyses = merged
-    .filter((a) => !TRIAGE_ROUTES.has(a.route) && a.triage_reason == null)
+  const analyses = prissatta
     // Kontraktsklockan beräknas FRESH vid läsning (aldrig lagrad) så "dagar kvar" stämmer
     // varje gång rummet öppnas. Zero Trust: bara rader med ett verkligt bindningsslut bär klocka.
     .map((a) => ({
@@ -310,6 +307,18 @@ export default async function handler(req, res) {
 // reasonCode (lagrat) + leverantörsnamn → kundvänlig, ärlig copy. NOLL siffror (sifferrevisorns tystnad orörd).
 
 /**
+ * Rummets uppdelning: en triagerad rad (en granskningsrutt eller ett triageskäl) blir ett bevakat kort, varje
+ * annan rad en prissatt analys. En rad hamnar alltid i exakt en lista. Exporterad så att fakturakedjans
+ * instrument (tests/fakturakedjan/kor.mjs) kör samma uppdelning; där stod förut en kopia, och ett sabotage mot
+ * raden här fällde noll tester (RU-02).
+ */
+const TRIAGE_ROUTES = new Set(['unsupported', 'review_queue']);
+export function delaRummet(rader = []) {
+  const triagerad = (a) => TRIAGE_ROUTES.has(a?.route) || a?.triage_reason != null;
+  return { triagerade: rader.filter(triagerad), prissatta: rader.filter((a) => !triagerad(a)) };
+}
+
+/**
  * Prisunderlaget för EN rad — med revisionsgrinden inbyggd.
  *
  * ⚠️ EXPORTERAD AV ETT ENDA SKÄL: BK-15 byggde först sin EGEN kopia av grinden
@@ -356,6 +365,13 @@ export function berikaRader(analyses = [], branchAnchors = {}) {
     const golv = niva ? nivaGolv(niva, BRANCHINDEX[a.category]?.licenseTierBenchmarks) : null;
     a.prisunderlag = underlagForRad(a, branchAnchors[a.category] ?? null, golv, niva);
     a._rader = undefined;
+    // En rad i en planvalskategori (mobil) har ingen dom, och ett lagrat byte på den visas inte (C1-1, D1-1,
+    // MS-08, RM-R1, RM-R3).
+    undanhallBytePaOvissNiva(a, {
+      bytesmalMotKategorigolv: BRANCHINDEX[a.category]?.bytesmalMotKategorigolv === true,
+    });
+    // Bytets mål är ett verifierat publikt listpris bara i en kategori vars prisbok är det (F1-1).
+    a.bytesmalVerifierat = BRANCHINDEX[a.category]?.source === 'real-public';
     // ── TYSTNADENS SKÄL FÖLJER MED RADEN (grundarbeslut 2026-09-17) ─────────────────────────
     // De offertprissatta kategorierna blir ALDRIG triagerade — mätt mot produktionen: noll rader.
     // De passerar triagen, revisionsgrinden kortsluter dem i `recommend()` till talfritt
@@ -394,6 +410,14 @@ export function byggRum(analyses = [], watched = []) {
 
 export function underlagForRad(a, ankare, golv, niva) {
   if (!isAudited(a?.category)) return null;
+  // INGET TAL PER ABONNEMANG I EN PLANVALSKATEGORI (fjortonde blicken på S1, Z-2). Talet är radens hela
+  // årskostnad delad med antalet abonnemang. På en faktura som också bär bredband eller molnväxel bär det
+  // de delarnas kostnad: 10 abonnemang för 10 470 kr och bredband för 2 097 kr per kvartal gav «Ni betalar
+  // 5 027 kr per abonnemang/år», där mobildelen är 4 188. Ingen lagrad rad bär mobildelens egen kostnad
+  // eller en flagga för en kombinerad faktura, så raden får inget underlag och rummet skriver
+  // planvalsmeningen utan tal (S6:s beslut i ops/KORPLAN-VAG1.md, byggregeln: strykning). Fakturavyn
+  // visar inget tal per abonnemang på samma faktura. RM-R8, FV-A19.
+  if (BRANCHINDEX[a?.category]?.bytesmalMotKategorigolv === true) return null;
   return byggPrisunderlag({
     annualCost: a.annual_cost,
     seats:      a.seat_count,
@@ -707,6 +731,7 @@ export async function buildBranchAnchors(analyses) {
           // Kategorier med bred produktspridning kräver en BEKRÄFTAD licensnivå innan vi hävdar
           // ett avstånd. Utan flaggan här skulle underlaget hävda det ändå (granskning 2026-08-20).
           kraverBekraftadNiva: b.kraverBekraftadNiva === true,
+          medianEtikett: b.medianEtikett ?? null,
           customerCost: a.annual_cost ?? null, seats,
         };
       }

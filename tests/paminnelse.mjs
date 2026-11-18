@@ -98,10 +98,11 @@ describe('PM · påminnelserna följer klockan', () => {
 
   test('PM-08 · cronen läser klockan och mappar raden uttryckligen', () => {
     const cron = strippaStrangar(readFileSync(new URL('../api/cron/send-reminders.mjs', import.meta.url), 'utf8'));
-    assert.match(cron, /underlagFranRad\(row\)/);
+    // Raden går genom rummets inhållning (lagratByte) innan den mappas; LB-01/LB-02 prövar beteendet.
+    assert.match(cron, /underlagFranRad\(lagratByte\(row\)\)/);
     assert.match(cron, /paminnelseBeslut\(/);
     assert.doesNotMatch(cron, /reminder60Html|reminder30Html|daysUntil\(/, 'de gamla slutdatumsmallarna lever kvar');
-    assert.match(cron, /outcomeEmailHtml\(\{ supplier: row\.supplier, netSaving: Number\(row\.net_saving\)/);
+    assert.match(cron, /outcomeEmailHtml\(\{ supplier: row\.supplier, netSaving: Number\(lagratByte\(row\)\.net_saving\)/);
   });
 
   test('PM-09 · säljkortet lovar exakt de varsel mekaniken skickar', async () => {

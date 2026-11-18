@@ -191,7 +191,8 @@ describe('FX · cronen får aldrig bokföra ett misslyckande som en kurs', () =>
 describe('FX · en osäker kurs river hela påståendet, inte halva', () => {
   test('FX-13 · grinden ligger i recommend.js och täcker varje returväg', async () => {
     const REC = readFileSync(join(ROT, 'agents/recommender/recommend.js'), 'utf8');
-    assert.match(REC, /export async function recommend\(input, opts = \{\}\) \{\s*\n\s*const svar = await recommendUtanValutagrind/,
+    // Planvalsgrinden (11 nov) ligger i samma hölje, innanför valutagrinden: varje väg passerar båda.
+    assert.match(REC, /export async function recommend\(input, opts = \{\}\) \{\s*\n\s*const svar = planvalsgrind\(input, await recommendUtanValutagrind\(input, opts\)\);/,
       'höljet måste vara det exporterade `recommend` — annars finns en väg förbi det');
     assert.match(REC, /async function recommendUtanValutagrind/);
   });
@@ -265,7 +266,7 @@ describe('FX · spärren håller även i sidokanalen', () => {
   const API = strippaStrangar(readFileSync(join(ROT, 'api/test-invoice.mjs'), 'utf8'));
 
   test('FX-16 · den sekundära besparingen beräknas inte för en spärrad faktura', () => {
-    assert.match(API, /const secondarySaving = extracted\.prispastaendeSparrat \? null : computeSecondarySaving/,
+    assert.match(API, /const secondarySaving = \(extracted\.prispastaendeSparrat \|\| planvalsKategori\) \? null : computeSecondarySaving/,
       'utan spärren här kan sekundär-overriden återuppliva bytet med ett tal ur samma kurs');
     // Och overriden måste fortfarande vara den enda vägen tillbaka — hittar vi en andra väg som
     // sätter shouldSwitch=true ur secondarySaving är den här vakten inte fullständig.

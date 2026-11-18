@@ -1,0 +1,232 @@
+// tests/fakturakedjan/fall.mjs — matrisen för instrument A (FV, tests/fakturakedjan.mjs).
+// Varje fall är en faktura som extraktionen hade lämnat den, kategoriseringens svar och modellens svar.
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { fixtures as kombinerade } from '../fixtures/03-combined.mjs';
+
+const ROT = join(dirname(fileURLToPath(import.meta.url)), '../..');
+
+const MODELLEN = {
+  ja: { recommendationType: 'switch', shouldSwitch: true, savingPerYear: 9600, overpaymentPercent: 30,
+    confidence: 0.9, vipQueue: false, suggestedSupplier: 'Tele2', suggestedAnnualCost: 12000,
+    reasoning: 'Byt till ett billigare abonnemang och spara 9 600 kr per år.', switchSteps: ['Byt abonnemang.'] },
+  nej: { recommendationType: 'no_action', shouldSwitch: false, savingPerYear: 0, overpaymentPercent: 0,
+    confidence: 0.9, vipQueue: false, reasoning: 'Ert avtal ser bra ut.', switchSteps: [] },
+};
+
+export const MOBILRAD = /\((\d+) st\)/;
+export const BREDBANDSRAD = /bredband|fiber|internet|adsl|ftth/i;
+
+/** En rad som extraktionen hade lämnat den, med eller utan avläst antal. */
+function rad(l, antalAvlast) {
+  const m = MOBILRAD.exec(l.description);
+  const q = !antalAvlast ? null
+    : m ? Number(m[1])
+      : (!l.is_addon && BREDBANDSRAD.test(l.description)) ? 1 : null;
+  const jamnt = q && l.amount % q === 0;
+  return {
+    description: l.description, amount: l.amount, type: l.type ?? 'recurring_subscription',
+    quantity: q, unitPrice: jamnt ? l.amount / q : null,
+    is_addon: l.is_addon ?? false, addon_type: l.addon_type ?? null, is_prorata: false,
+    amount_ore: l.amount * 100, unit_price_ore: jamnt ? (l.amount / q) * 100 : null,
+  };
+}
+
+function fall({ id, kategori, rader, antalAvlast, modell, blandad = false, hastighet = null,
+  leverantor = 'Tele2 Sverige AB', normaliserad = 'Tele2', industry = 'konsult', employees = 10,
+  beskrivning = 'Mobilabonnemang oktober 2026' }) {
+  const lineItems = rader.map((l) => rad(l, antalAvlast));
+  const summa = lineItems.reduce((s, l) => s + l.amount, 0);
+  const lopande = lineItems.filter((l) => l.type === 'recurring_subscription').reduce((s, l) => s + l.amount, 0);
+  const platser = lineItems.filter((l) => l.quantity && MOBILRAD.test(l.description)).reduce((s, l) => s + l.quantity, 0);
+  return {
+    id, industry, employees,
+    extraktion: {
+      supplier: leverantor, date: '2026-10-01', invoiceNumber: null,
+      description: beskrivning, billingPeriod: 'monthly', lineItems,
+      confidenceScore: 0.95, confidenceNotes: null, outOfScope: false, outOfScopeReason: null,
+      seatCount: platser > 0 ? platser : null, projectedRecurringAmount: lopande,
+      currency: 'SEK', moms_bas: 'exkl', moms_sats: 0.25, potential_mixed_categories: blandad,
+      invoiceTotal: summa, connection_speed_mbit: hastighet,
+    },
+    kategorisering: { category: kategori, subType: null, normalizedSupplier: normaliserad, confidence: 0.95, reasoning: 'Klassad.' },
+    modellen: MODELLEN[modell],
+    oraklet: platser > 0 ? String(platser) : '',
+    _modell: modell, _antal: antalAvlast,
+  };
+}
+
+// ── Matrisen ──────────────────────────────────────────────────────────────────────────────────────
+export const MOBILFALL = [];
+for (const fx of kombinerade.filter((f) => f.category === 'mobil')) {
+  for (const modell of ['ja', 'nej']) {
+    for (const antalAvlast of [true, false]) {
+      MOBILFALL.push(fall({ id: `${fx.id}·${modell}·${antalAvlast ? 'antal' : 'utan'}`, kategori: 'mobil',
+        rader: fx.lineItems, antalAvlast, modell, blandad: fx.mixed === true,
+        hastighet: fx.metrics?.secondaryConnectionSpeedMbit ?? null,
+        industry: fx.industry ?? 'konsult', employees: fx.employees ?? 10 }));
+    }
+  }
+}
+const RENA = [
+  { id: 'xl349', rader: [{ type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (10 st)', amount: 3490 }] },
+  { id: 'm299', rader: [{ type: 'recurring_subscription', description: 'Tele2 Jobbmobil M (10 st)', amount: 2990 }] },
+];
+for (const r of RENA) {
+  for (const modell of ['ja', 'nej']) {
+    for (const antalAvlast of [true, false]) {
+      MOBILFALL.push(fall({ id: `${r.id}·${modell}·${antalAvlast ? 'antal' : 'utan'}`, kategori: 'mobil',
+        rader: r.rader, antalAvlast, modell }));
+    }
+  }
+}
+export const it8821 = JSON.parse(readFileSync(join(ROT, 'tests/fixtures/it-8821-ms365.json'), 'utf8'));
+export const MOTPROV = [
+  // 699 kr/mån för 1000 Mbit mot Tele2:s 319: 54 % lägre, under sanitetsvaktens tak på 65 %.
+  fall({ id: 'motprov·bredband', kategori: 'bredband', modell: 'ja', antalAvlast: true, hastighet: 1000,
+    leverantor: 'Telia Sverige AB', normaliserad: 'Telia', beskrivning: 'Företagsbredband oktober 2026',
+    rader: [{ type: 'recurring_subscription', description: 'Bredband Fiber 1000/1000 Mbit/s', amount: 699 }] }),
+  {
+    ...fall({ id: 'motprov·it8821', kategori: 'saas-productivity', modell: 'ja', antalAvlast: true,
+      leverantor: it8821.supplier, normaliserad: 'Microsoft', industry: 'bygg', employees: it8821.employees,
+      beskrivning: 'Microsoft 365 licenser maj 2026',
+      rader: [] }),
+  },
+];
+// Fyndmatrisen (Fables beslut 12 nov, beviskrav 3): varje fyndtyp i lib/forensics.js på en ren och en kombinerad
+// mobilfaktura, med modellens ja och nej. Forensiken räknar fyndet ur kundens egna rader, och planvalsbeskedet står
+// i samma vy. K-2 (delbetalningen) och N-1 (leverantörens egen höjning) fälldes på två av dem.
+export const FYNDRADER = {
+  hardware_overpaid: 'Delbetalning iPhone 15 Pro, månad 38 av 36',
+  supplier_documented_hike: 'Prisjustering mobilabonnemang',
+  fx_surcharge: 'Valutapåslag',
+  hardware_financing: 'Delbetalning iPhone 15 Pro, månad 12 av 36',
+  junk_fee: 'Pappersfakturaavgift',
+};
+export const FYNDFALL = [];
+for (const [typ, beskrivning] of Object.entries(FYNDRADER)) {
+  for (const form of ['ren', 'komb']) {
+    for (const modell of ['ja', 'nej']) {
+      const rader = [{ type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (10 st)', amount: 3490 },
+        ...(form === 'komb' ? [{ type: 'recurring_subscription', description: 'Företagsbredband Fiber 1000/1000', amount: 699 }] : []),
+        { type: 'recurring_subscription', description: beskrivning, amount: 449 }];
+      const f = fall({ id: `fynd·${typ}·${form}·${modell}`, kategori: 'mobil', modell, antalAvlast: true, rader,
+        blandad: form === 'komb', hastighet: form === 'komb' ? 1000 : null });
+      Object.assign(f.extraktion.lineItems.at(-1), { quantity: 1, unitPrice: 449, unit_price_ore: 44900 });
+      f._fyndtyp = typ;
+      FYNDFALL.push(f);
+    }
+  }
+}
+
+// Den tionde linsens fall A (O-1): en bredbandsfaktura med en mobildel. Sekundärvägen jämför mobildelen mot
+// listpris; under 500 kr brutto blir den null, och meningen om resten får då inte påstå något om vad vi gjort.
+// Mobildelen à 449 kr är motprovet: där finns en sekundär besparing (2 160 kr).
+export const KOMBIFALL = [];
+for (const mobildel of [269, 299, 449]) {
+  for (const modell of ['ja', 'nej']) {
+    KOMBIFALL.push(fall({ id: `kombi·bredband+mobil${mobildel}·${modell}`, kategori: 'bredband', modell, antalAvlast: true,
+      blandad: true, hastighet: 1000, leverantor: 'Telia Sverige AB', normaliserad: 'Telia',
+      beskrivning: 'Företagsbredband och mobil oktober 2026',
+      rader: [{ type: 'recurring_subscription', description: 'Företagsbredband Fiber 1000/1000', amount: 699 },
+        { type: 'recurring_subscription', description: 'Mobilabonnemang Jobbmobil (1 st)', amount: mobildel }] }));
+  }
+}
+
+// Den elfte linsens rutnät (P-1): kombinerade fakturor med tilläggsrader, avgifter, hårdvara, kvartal, saknat antal,
+// en mobilrad regexen inte känner igen och en faktura i EUR. Resten ska vara en summa: P + resten = «Ni betalar idag».
+const BB = { type: 'recurring_subscription', description: 'Företagsbredband Fiber 1000/1000', amount: 699 };
+const MOB = { type: 'recurring_subscription', description: 'Mobilabonnemang Jobbmobil (1 st)', amount: 269 };
+const TILLAGG = {
+  pbx: { type: 'recurring_subscription', description: 'Molnväxel Touchpoint', amount: 199, is_addon: true, addon_type: 'pbx' },
+  ip: { type: 'recurring_subscription', description: 'Statisk IP-adress', amount: 99, is_addon: true, addon_type: 'static_ip' },
+  router: { type: 'recurring_subscription', description: 'Router hyra', amount: 49 },
+  avgift: { type: 'recurring_subscription', description: 'Pappersfakturaavgift', amount: 29 },
+  hw: { type: 'hardware', description: 'Delbetalning iPhone 15 Pro, månad 12 av 36', amount: 449 },
+};
+const kombi = (id, o) => fall({ id, kategori: 'bredband', antalAvlast: true, blandad: true, hastighet: 1000,
+  leverantor: 'Telia Sverige AB', normaliserad: 'Telia', beskrivning: 'Företagsbredband och mobil oktober 2026', ...o });
+export const RESTFALL = [];
+for (const modell of ['ja', 'nej']) {
+  for (const [namn, t] of Object.entries(TILLAGG)) RESTFALL.push(kombi(`rest·bb+mob+${namn}·${modell}`, { modell, rader: [BB, MOB, t] }));
+  RESTFALL.push(fall({ id: `rest·mob+bb+pbx·${modell}`, kategori: 'mobil', modell, antalAvlast: true, blandad: true, hastighet: 1000,
+    beskrivning: 'Mobil och bredband oktober 2026',
+    rader: [{ type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (10 st)', amount: 3490 }, BB, TILLAGG.pbx] }));
+  const kvartal = kombi(`rest·bb+mob·kvartal·${modell}`, { modell, rader: [{ ...BB, amount: 2097 }, { ...MOB, amount: 807 }] });
+  kvartal.extraktion.billingPeriod = 'quarterly';
+  RESTFALL.push(kvartal);
+  RESTFALL.push(kombi(`rest·bb+mob·utan-antal·${modell}`, { modell, antalAvlast: false, hastighet: null, rader: [BB, MOB] }));
+  RESTFALL.push(kombi(`rest·bb+okand-mobilrad·${modell}`, { modell,
+    rader: [BB, { type: 'recurring_subscription', description: 'Telia Jobbmobil 15 GB (1 st)', amount: 269 }] }));
+  // Den trettonde linsens Q1 och Q3 (Y-1): mobil som primär del på en kvartals- respektive årsfaktura. P räknas som om
+  // beloppen gällde en månad, så talet blir 3 respektive 12 gånger för stort; fakturan är en planvalsfaktura.
+  // Årsfallet är Q3 ordagrant, fem abonnemang (den fjortonde blicken, Z-3): med tio låg fakturan under kategorins
+  // golv, och main räknade inget byte och höll den inte i granskning, så fallet prövade inte det som gjorde Y-1 och
+  // Z-2 vanligare.
+  for (const [period, mob, bb, mobRad] of [['quarterly', 10470, 2097, 'Tele2 Jobbmobil XL (10 st)'],
+    ['annual', 16140, 8388, 'Tele2 Jobbmobil (5 st)']]) {
+    const f = fall({ id: `rest·mob+bb·${period}·${modell}`, kategori: 'mobil', modell, antalAvlast: true, blandad: true,
+      hastighet: 1000, beskrivning: 'Mobil och bredband',
+      rader: [{ type: 'recurring_subscription', description: mobRad, amount: mob }, { ...BB, amount: bb }] });
+    f.extraktion.billingPeriod = period;
+    RESTFALL.push(f);
+  }
+  // Den trettonde linsens Q2 ordagrant: mobil och molnväxel per kvartal. Main släpper den `auto`, för det ogrindade
+  // bytets mål är inte lägre än årskostnaden; sanitetsvakten på grenen får då inte pröva den (FV-A20:s motprov, Å-1).
+  // Beskrivningen och hastigheten är linsens: med «Mobil och molnväxel» och utan hastighet tog fakturan en väg där
+  // grinden inte prövas (varför är inte avläst), och sabotaget mot grinden fällde då noll.
+  const q2 = fall({ id: `rest·mob+pbx·quarterly·${modell}`, kategori: 'mobil', modell, antalAvlast: true, blandad: true,
+    hastighet: 1000, beskrivning: 'Mobil Q4 2026', rader: [{ type: 'recurring_subscription', description: 'Tele2 Jobbmobil (5 st)',
+      amount: 4035 }, { ...TILLAGG.pbx, amount: 597 }] });
+  q2.extraktion.billingPeriod = 'quarterly';
+  RESTFALL.push(q2);
+  // Den sextonde linsens Ö-1: en mobilfaktura i EUR eller USD, med en kurs som inte är färsk. Valutagrinden river
+  // bytet, och main analyserar fakturan som vanligt (`auto`). Motprovet med färsk kurs går till granskning på båda,
+  // för det ogrindade bytet är 72 % av årskostnaden (FV-A20).
+  for (const [kurs, fxKurs] of [['ingen', { rate: 10.5, source: 'fallback', date: null }],
+    ['gammal', { rate: 10.5, source: 'riksbank', date: '2026-10-01', fetchedAt: '2026-10-01T06:00:00Z' }],
+    ['farsk', null]]) {
+    for (const [namn, rader, blandad, hastighet] of [
+      ['ren', [{ type: 'recurring_subscription', description: 'Mobile subscription Jobbmobil (10 st)', amount: 900 }], false, null],
+      ['komb', [{ type: 'recurring_subscription', description: 'Mobile subscription Jobbmobil (10 st)', amount: 900 },
+        { ...BB, description: 'Bredband Fiber 1000/1000', amount: 60 }], true, 1000]]) {
+      const f = fall({ id: `valuta·EUR·${kurs}·${namn}·${modell}`, kategori: 'mobil', modell, antalAvlast: true, blandad, hastighet, rader });
+      f.extraktion.currency = 'EUR';
+      if (fxKurs) f.fxKurs = fxKurs;
+      RESTFALL.push(f);
+    }
+  }
+  const eur = kombi(`rest·bb+mob·eur·${modell}`, { modell, rader: [{ ...BB, amount: 61 }, { ...MOB, amount: 24 }] });
+  // Den sextonde linsens E·neg (Ö-2): ingen primärdel (bara bredband och molnväxel), modellens ja med en negativ
+  // besparing. Main släpper den `auto`; mains andra finansiella grind (positiv besparing) håller vakten borta (FV-A20).
+  if (modell === 'ja') {
+    const neg = fall({ id: 'rest·neg·ja', kategori: 'mobil', modell, antalAvlast: true, blandad: true, hastighet: 1000,
+      beskrivning: 'Mobil och bredband oktober 2026', rader: [{ ...BB, amount: 699 }, TILLAGG.pbx] });
+    neg.modellen = { ...neg.modellen, savingPerYear: -1200, suggestedAnnualCost: null };
+    RESTFALL.push(neg);
+    // Den sjuttonde linsens Ä-1: samma faktura med bredbandets hastighet i radtexten. Då räknar main en sekundär
+    // besparing, den andra finansiella grinden släpper bytet (−1 200 + 4 560 > 0), och vakten håller fakturan för den
+    // negativa besparingen. Utan «Mbit» (fallet ovan) är den sekundära besparingen null och fakturan går `auto`.
+    const negMbit = fall({ id: 'rest·neg·mbit·ja', kategori: 'mobil', modell, antalAvlast: true, blandad: true,
+      hastighet: 1000, beskrivning: 'Mobil och bredband oktober 2026',
+      rader: [{ ...BB, description: 'Företagsbredband Fiber 1000/1000 Mbit', amount: 699 }, TILLAGG.pbx] });
+    negMbit.modellen = { ...negMbit.modellen, savingPerYear: -1200, suggestedAnnualCost: null };
+    RESTFALL.push(negMbit);
+  }
+  eur.extraktion.currency = 'EUR';
+  RESTFALL.push(eur);
+}
+
+// IT-8821 bär sina avlästa antal och à-priser ordagrant ur fixturen.
+Object.assign(MOTPROV[1].extraktion, {
+  date: it8821.date,
+  lineItems: it8821.lineItems.map((l) => ({ ...l, is_prorata: false, amount_ore: l.amount * 100,
+    unit_price_ore: l.unitPrice * 100 })),
+  seatCount: it8821.seatCount,
+  projectedRecurringAmount: it8821.lineItems.reduce((s, l) => s + l.amount, 0),
+  invoiceTotal: it8821.lineItems.reduce((s, l) => s + l.amount, 0),
+  potential_mixed_categories: false, connection_speed_mbit: null, license_type: null,
+});
+MOTPROV[1].oraklet = String(it8821.seatCount);
+

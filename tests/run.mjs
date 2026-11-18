@@ -182,6 +182,10 @@ import './vaxelrad.mjs';
 import './vallgraven.mjs';
 import './kanariedom.mjs';
 import './listpristak.mjs';
+import './mobilscore.mjs';
+import './planvalsgrind.mjs';
+import './fakturakedjan.mjs';
+import './rumsmatris.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,
