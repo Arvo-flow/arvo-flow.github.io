@@ -205,6 +205,14 @@ for (const modell of ['ja', 'nej']) {
       beskrivning: 'Mobil och bredband oktober 2026', rader: [{ ...BB, amount: 699 }, TILLAGG.pbx] });
     neg.modellen = { ...neg.modellen, savingPerYear: -1200, suggestedAnnualCost: null };
     RESTFALL.push(neg);
+    // Den sjuttonde linsens Ä-1: samma faktura med bredbandets hastighet i radtexten. Då räknar main en sekundär
+    // besparing, den andra finansiella grinden släpper bytet (−1 200 + 4 560 > 0), och vakten håller fakturan för den
+    // negativa besparingen. Utan «Mbit» (fallet ovan) är den sekundära besparingen null och fakturan går `auto`.
+    const negMbit = fall({ id: 'rest·neg·mbit·ja', kategori: 'mobil', modell, antalAvlast: true, blandad: true,
+      hastighet: 1000, beskrivning: 'Mobil och bredband oktober 2026',
+      rader: [{ ...BB, description: 'Företagsbredband Fiber 1000/1000 Mbit', amount: 699 }, TILLAGG.pbx] });
+    negMbit.modellen = { ...negMbit.modellen, savingPerYear: -1200, suggestedAnnualCost: null };
+    RESTFALL.push(negMbit);
   }
   eur.extraktion.currency = 'EUR';
   RESTFALL.push(eur);

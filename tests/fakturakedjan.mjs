@@ -503,7 +503,9 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     const halls = ['comb-25·ja·antal', 'comb-25·ja·utan', 'comb-46·ja·antal', 'comb-46·ja·utan',
       'rest·mob+bb·quarterly·ja', 'rest·mob+bb·quarterly·nej', 'rest·mob+bb·annual·ja', 'rest·mob+bb·annual·nej',
       // Motprovet till valutafallen: med färsk kurs är det ogrindade bytet 72 % av årskostnaden, och main håller fakturan.
-      'valuta·EUR·farsk·ren·ja', 'valuta·EUR·farsk·komb·nej'];
+      'valuta·EUR·farsk·ren·ja', 'valuta·EUR·farsk·komb·nej',
+      // Ä-1: mains andra grind räknar med bredbandsdelens besparing, och vakten håller den negativa besparingen.
+      'rest·neg·mbit·ja'];
     for (const id of halls) {
       const u = UT.get(id);
       assert.ok(u, `${id} saknas i instrumentet`);

@@ -400,6 +400,12 @@ Var och en byggs i en egen PR, med egen granskning.
   · Ö-2 [VAKT], lagat 18 nov: mains andra finansiella grind (positiv besparing) hade inget test; FV-A20 bär nu linsens
     fall med negativ besparing, och sabotaget mot grinden fäller det.
 
+- **Ur den sjuttonde blickens dom på S1 (`ops/GRANSKNING-s1-sjuttonde.md`):**
+  · Ä-1 [KUND], infört av S1 (blockerade): kopian av mains andra finansiella grind räknade inte med bredbandsdelens
+    besparing, som main räknar också på en mobilfaktura. En kombinerad mobilfaktura där modellen svarar ja med en
+    negativ besparing och bredbandsraden bär sin hastighet gick `auto` där main håller den. Lagat 18 nov: kopian räknar
+    mains sekundära besparing, bara för granskningsbeslutet (FV-A20, `rest·neg·mbit·ja`).
+
 ## Steg b, avläst underlag (22 okt)
 
 `probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,

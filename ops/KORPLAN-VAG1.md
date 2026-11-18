@@ -26,10 +26,11 @@ startar om läser blocket först.
   mains route, och de 238 `auto`-fallen är oförändrade mot f1f17f60. *Frågan till Fable:* håller C1 som sömdesign i
   api/test-invoice.mjs, eller ska mains prövning bo någon annanstans?
 - **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
-- **Senaste mekanikcommit på grenen:** «S1: valutagrinden river också mains byte (Ö-1)». Den sextonde linsen
-  blockerade a3a6e83f (`ops/GRANSKNING-s1-sextonde.md`), S1:s nionde blockering i rad, på ett fel i lagningen själv.
-- **Lins igång:** ja. Sjuttonde linsen på den commiten startas 18 nov; domen skrivs till
-  `ops/GRANSKNING-s1-sjuttonde.md`. Säkerhetsnät: 60 minuter.
+- **Senaste mekanikcommit på grenen:** «S1: mains andra grind räknar med bredbandsdelen (Ä-1)». Den sjuttonde linsen
+  blockerade 37997d49 (`ops/GRANSKNING-s1-sjuttonde.md`), S1:s tionde blockering i rad, på ett tredje steg i mains väg
+  som återgivningen saknade.
+- **Lins igång:** ja. Artonde linsen på den commiten startas 18 nov; domen skrivs till
+  `ops/GRANSKNING-s1-artonde.md`. Säkerhetsnät: 60 minuter.
 - **Fable:** tre analyser av gränssnittet, frontend och kontoret står i `ops/ANALYS-GRANSSNITT-FABLE.md`, med Opus
   avläsning av fynden. De förs in i stegen efter S1.
 - **Byggare igång:** nej.
@@ -450,7 +451,18 @@ granskning där main analyserar den (16 av linsens 44 fall, och 3 av 4 med en se
 river också det ogrindade bytet. Mätt efteråt med linsens instrument: 472 av 472 fall (linsens 266, 44, 150, 4 och 8)
 har mains route, och `auto`-fallen är oförändrade mot a3a6e83f. Ö-2 [VAKT]: mains andra finansiella grind har nu ett
 fall i FV-A20 (en negativ besparing, linsens E·neg). Läxan står i regel 13 redan: återge mains väg steg för steg, och
-räkna stegen innan återgivningen kallas trogen; här var de tre. Å-1 är därmed förexisterande och inte vanligare; det syns för kund i dag på main och byggs i en egen PR direkt
+räkna stegen innan återgivningen kallas trogen; här var de tre.
+
+**Den sjuttonde blicken (18 nov) fällde lagningen på Ä-1**, ett steg till som återgivningen saknade. Mains andra
+finansiella grind är `prim + sek <= 0`, och main räknar den sekundära (bredbandets) besparingen också på en
+mobilfaktura; grenen räknar bort den (FV-A2), och kopian prövade bara primärdelen. En kombinerad mobilfaktura där
+modellen svarar ja med en negativ besparing och bredbandsraden bär sin hastighet gick då `auto`, där main håller den
+(7 av linsens 27 fall). Den sextonde domens förklaring av E-fallen («sek=0 när primärdelen saknas») var fel: sek var 0
+för att radtexten saknade «Mbit». Lagat: kopian räknar mains sekundära besparing, bara för granskningsbeslutet. Mätt
+efteråt: 512 av 512 fall (linsernas 266, 44, 150, 4, 8, 27 och FV:s 13) har mains route, och `auto`-fallen är
+oförändrade mot 37997d49. Stegen mellan `recommend()` och vakten på main är nu fyra och alla återgivna: valutagrinden,
+sekundärvägen med dess överskrivning (som med modellens nej och en sekundär besparing ger ett byte med besparingen 0,
+alltså 0 % och `auto` på båda; linsens `M·nej-…`), och de två finansiella grindarna. Å-1 är därmed förexisterande och inte vanligare; det syns för kund i dag på main och byggs i en egen PR direkt
 efter S1:s merge (avgränsningen 22 okt). Å-2 [VAKT] är lagad i samma commit: renderingssonden läser stycket som bär
 «Kombinerad faktura.» ur DOM:en och kräver att det inte säger något mer på en planvalsfaktura.
 

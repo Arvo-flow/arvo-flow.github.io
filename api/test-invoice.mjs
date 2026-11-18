@@ -1989,10 +1989,21 @@ export default async function handler(req, res) {
     // main prövade: grindens ogrindade tal, efter samma två finansiella grindar som ovan. Fälls det går fakturan
     // till granskning precis som på main, med samma skäl och samma texter. Grinden lägger alltså aldrig en faktura
     // `auto` som main höll (FV-A20).
+    // Den andra grinden räknar på main med bredbandsdelens besparing (`prim + sek <= 0`), och main räknar den också
+    // på en mobilfaktura. Grenen visar den inte (FV-A2), men beslutet om granskning tar den med (sjuttonde blicken,
+    // Ä-1): utan den gick en faktura där modellen svarar ja med en negativ besparing `auto`, där main höll den.
+    // Talet når ingen kund; det används bara här.
+    const _mainsSekundar = planvalsKategori && !extracted.prispastaendeSparrat ? computeSecondarySaving({
+      metrics,
+      category:                 categorized.category,
+      potentialMixedCategories: extracted.potentialMixedCategories ?? false,
+      industry,
+      employees:                employeesNum,
+    }) : secondarySaving;
     const _ogrindat = recommendation[OGRINDAT_BYTE];
     const _ogrindatProvas = !recommendation.shouldSwitch && _ogrindat?.shouldSwitch === true
       && !((_ogrindat.suggestedAnnualCost ?? 0) > 0 && _ogrindat.suggestedAnnualCost >= (extracted.annualCost ?? 0))
-      && ((_ogrindat.savingPerYear ?? 0) > 0);
+      && ((_ogrindat.savingPerYear ?? 0) + (_mainsSekundar?.grossSaving ?? 0) > 0);
     const _provat = recommendation.shouldSwitch ? recommendation : (_ogrindatProvas ? _ogrindat : null);
     if (_provat && (extracted.annualCost ?? 0) > 0) {
       const _savingPct = Math.round(
