@@ -769,7 +769,8 @@ export default function Portfolio() {
     : null;
   // Ett fynd utan årstal (en engångsavgift, en hårdvarurad, en period vi inte kunde bestämma) har inget
   // «kr/år». Rummet skrev «Vi fångade – kr/år» med ett streck (Å-1). Då säger domen att en kostnad fångades
-  // och pekar på kortet, som bär radens belopp med dess enhet (RS-Å1 i tests/rumsredovisning.mjs).
+  // och pekar på kortet, som bär radens belopp med dess enhet. Prövas i DOM:en av scripts/screenshot-hardvara.mjs
+  // (H-5: här citerades ett test som inte finns).
   const fyndArstal = Number.isFinite(roomFinding?.annualImpact) && roomFinding.annualImpact > 0;
   const fyndKr = <b>{fmtNum(roomFinding?.annualImpact)} kr/år</b>;
   // ══ DOMTEXT — EN TEXT PER LÄGE, ALDRIG EN GREN PÅ RÅDATA (Lägesregistret 2026-09-23) ════════

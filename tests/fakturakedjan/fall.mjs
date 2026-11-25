@@ -230,8 +230,8 @@ Object.assign(MOTPROV[1].extraktion, {
 });
 MOTPROV[1].oraklet = String(it8821.seatCount);
 
-// Hårdvaru-PR:en (X-1, Å-1): en avbetalning typad `hardware` ingår inte i årskostnaden, och på en kvartalsfaktura bär
-// raden tre månader. Motprovet typar avbetalningen som abonnemang; då ingår den och dras av (FV-A21).
+// Hårdvaru-PR:en (Å-1): en avbetalning kallas aldrig engångsbelopp, vilken typ extraktionen än gett den. Motprovet typar
+// avbetalningen som abonnemang; då är den löpande och fyndet bär ett årstal (FV-A21).
 export const HARDVARUFALL = [];
 for (const modell of ['ja', 'nej']) {
   const kv = kombi(`hw·kvartal·${modell}`, { modell, blandad: false, beskrivning: 'Företagsbredband Q4 2026',
@@ -241,4 +241,11 @@ for (const modell of ['ja', 'nej']) {
 }
 HARDVARUFALL.push(kombi('hw·abonnemang·ja', { modell: 'ja', rader: [BB, MOB,
   { ...TILLAGG.hw, type: 'recurring_subscription' }] }));
+// H-3: samma delbetalning typad som engångsavgift, per kvartal (första blicken på hårdvaru-PR:en, `adv·otf-kvartal`).
+{
+  const otf = kombi('hw·kvartal·otf·ja', { modell: 'ja', blandad: false, beskrivning: 'Företagsbredband Q4 2026',
+    rader: [{ ...BB, amount: 2097 }, { ...TILLAGG.hw, type: 'one_time_fee', amount: 1347 }] });
+  otf.extraktion.billingPeriod = 'quarterly';
+  HARDVARUFALL.push(otf);
+}
 

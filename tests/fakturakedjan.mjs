@@ -533,27 +533,27 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     }
   });
 
-  // ── FV-A21 · HÅRDVARAN GENOM HELA HANDLERN (X-1, Å-1) ──────────────────────────────────────────────────
-  // «Ni betalar idag» är årskostnaden när avbetalningen är typad `hardware` (den ingick aldrig), avbetalningens
-  // årsbelopp räknas i fakturans period, och fyndkortet kallar inte avbetalningen ett engångsbelopp. Motprovet:
-  // typad som abonnemang ingår den i årskostnaden och dras av.
-  test('FV-A21 · hårdvarujusteringen drar bara av det årskostnaden bar, i fakturans period', () => {
-    const fel = brott(['rest·bb+mob+hw·ja', 'rest·bb+mob+hw·nej', 'hw·kvartal·ja', 'hw·kvartal·nej', 'hw·abonnemang·ja'], (u) => {
-      if (u.route !== 'auto' || !u.hardvara) return `route ${u.route}, justering ${JSON.stringify(u.hardvara)}`;
-      const { adjAnnualCost, hwAnnualCost, skuldenIArskostnaden } = u.hardvara;
-      if (u.id === 'hw·abonnemang·ja') {
-        if (adjAnnualCost !== u.arskostnad - 449 * 12) return `«Ni betalar idag» ${adjAnnualCost} av ${u.arskostnad}`;
-        return skuldenIArskostnaden === true ? null : 'skulden ingick i årskostnaden';
-      }
-      const kvartal = u.id.startsWith('hw·kvartal');
-      if (adjAnnualCost !== u.arskostnad) return `«Ni betalar idag» ${adjAnnualCost}, årskostnaden ${u.arskostnad}`;
-      if (hwAnnualCost !== (kvartal ? 1347 * 4 : 449 * 12)) return `avbetalningens årsbelopp ${hwAnnualCost}`;
-      if (skuldenIArskostnaden !== false) return 'skulden ingick inte i årskostnaden';
-      if (u.hardwareCharges !== (kvartal ? 1347 : 449)) return `hardwareCharges ${u.hardwareCharges}`;
+  // ── FV-A21 · HÅRDVARAN GENOM HELA HANDLERN (Å-1, H-3) ────────────────────────────────────────────────────
+  // Svaret bär hårdvarudelen av engångsavgifterna (vyn säger «hårdvara», aldrig «engångskostnader» om den), och
+  // fyndkortet kallar avbetalningen «på fakturan», aldrig engångsbelopp, också när extraktionen typat den som
+  // engångsavgift. Motprovet: typad som abonnemang är raden löpande och fyndet bär ett årstal.
+  // Justeringens tal (X-1) prövas inte här: de står som på main (byggregeln, första blicken på hårdvaru-PR:en).
+  test('FV-A21 · en avbetalning kallas aldrig engångsbelopp, och svaret bär dess del av engångsavgifterna', () => {
+    const VANTAT = {
+      'rest·bb+mob+hw·ja': { hw: 449, enhet: '449 kr · på fakturan' },
+      'rest·bb+mob+hw·nej': { hw: 449, enhet: '449 kr · på fakturan' },
+      'hw·kvartal·ja': { hw: 1347, enhet: '1\u00a0347 kr · på fakturan' },
+      'hw·kvartal·nej': { hw: 1347, enhet: '1\u00a0347 kr · på fakturan' },
+      'hw·kvartal·otf·ja': { hw: 1347, enhet: '1\u00a0347 kr · på fakturan' },
+      'hw·abonnemang·ja': { hw: 0, enhet: null },
+    };
+    const fel = brott(Object.keys(VANTAT), (u) => {
+      const v = VANTAT[u.id];
+      if (u.route !== 'auto') return `route ${u.route}`;
+      if (u.hardwareCharges !== v.hw) return `hardwareCharges ${u.hardwareCharges}, väntat ${v.hw}`;
       if (u.fynd?.typ !== 'hardware_financing') return `fyndet är ${u.fynd?.typ}`;
-      const belopp = kvartal ? '1\u00a0347' : '449';
-      if (u.fynd.metricText !== `${belopp} kr · på fakturan`) return `fyndets belopp: ${u.fynd.metricText}`;
-      return null;
+      if (v.enhet === null) return u.fynd.metricText == null && u.fynd.belopp > 0 ? null : `motprovet: ${u.fynd.metricText}, ${u.fynd.belopp}`;
+      return u.fynd.metricText === v.enhet ? null : `fyndets belopp: ${u.fynd.metricText}`;
     });
     assert.deepEqual(fel, []);
   });

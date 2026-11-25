@@ -424,3 +424,27 @@ describe('FO · beloppets enhet följer radens typ', () => {
     assert.match(rorlig.metricText, /· på fakturan$/, 'en rörlig avgift är inte heller ett engångsbelopp');
   });
 });
+
+// ── FO-15 · AVBETALNINGEN KÄNNS IGEN PÅ BESKRIVNINGEN, INTE BARA PÅ TYPEN (H-3, första blicken på hårdvaru-PR:en) ──
+// En delbetalning som extraktionen typat `one_time_fee` hette fortfarande engångsbelopp, fast detektorn själv läste
+// raden som en avbetalning. Ett lagrat «engångsbelopp» utan sparade rader stod också kvar.
+describe('FO · en avbetalning är aldrig ett engångsbelopp, vilken typ den än fått', () => {
+  const OTF = { type: 'one_time_fee', description: 'Delbetalning iPhone 15 Pro, månad 12 av 36', amount: 1347 };
+
+  test('FO-15 · typad one_time_fee, vid analysen och vid läsning, med och utan sparade rader', () => {
+    const f = detectForensicFindings([OTF], { billingPeriod: 'quarterly' })[0];
+    assert.equal(f.type, 'hardware_financing');
+    assert.equal(f.metricText, '1 347 kr · på fakturan');
+    assert.equal(f.engangsbelopp, false);
+    const lagrat = { type: 'hardware_financing', severity: 'medium', title: 'Hårdvaruavbetalning på en löpande rad',
+      lineDescription: OTF.description, monthly: 1347, annualImpact: null, metricText: '1 347 kr · engångsbelopp' };
+    assert.equal(refineFinding(lagrat, { billingPeriod: 'quarterly', lineItems: [OTF] }).metricText, '1 347 kr · på fakturan');
+    const utanRader = refineFinding(lagrat, { billingPeriod: 'quarterly' });
+    assert.equal(utanRader.metricText, '1 347 kr · på fakturan', 'ett lagrat engångsbelopp om en avbetalning får inte stå kvar');
+    assert.equal(utanRader.engangsbelopp, false);
+    // Motprov: en lagrad engångsavgift som inte är en avbetalning behåller sitt ord utan sparade rader.
+    const avgift = { type: 'junk_fee', severity: 'medium', title: 'x', lineDescription: 'Pappersfakturaavgift',
+      monthly: 49, annualImpact: null, metricText: '49 kr · engångsbelopp' };
+    assert.equal(refineFinding(avgift, { billingPeriod: 'monthly' }).metricText, '49 kr · engångsbelopp');
+  });
+});

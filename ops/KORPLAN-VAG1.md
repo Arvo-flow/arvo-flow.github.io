@@ -14,6 +14,18 @@
 Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5). En session som
 startar om läser blocket först.
 
+- **Underlag för ett kort Fable-pass, hårdvarujusteringen (Fable kunde inte anropas 25 nov, kontots kvot slut; eskaleringsregeln,
+  utlösare 2: sömmen i api/test-invoice.mjs):** *Problemet:* `computeHardwareAdjustment` (lib/hardware-installments.js)
+  räknar en egen, tredje besparing, `(annualCost − avbetalning) − responseSuggested`, som i fakturavyn ersätter svarets
+  egna tal. Målpriset gäller på en kombinerad faktura bara primär(+sekundär)delen (api/test-invoice.mjs:2051-2055 och
+  ~2149), och årskostnaden kan bära en `hardware`-rad när modellens projektion gör det (agents/test-invoice/extract.js
+  ~985). *Mätt (`ops/GRANSKNING-hardvara-forsta.md`):* H-1 `rest·bb+mob+hw·ja` vyn +6 230 på grenen, +1 920 på main,
+  svarets netto 3 648; H-2 projektionen 1 417 med avbetalningen ger «Ni betalar idag 17 004» på grenen, 11 616 på main.
+  *Alternativen:* A stryk X-1-delen (mains tal, PR:en bär orden); B justeringen räknar aldrig en egen besparing
+  (svarets brutto minus den avbetalning basen bar, «bar» mätt ur projektionen mot radsumman, annars inga justerade tal);
+  C stryk de justerade talen helt (vyn visar svarets tal, justeringen bara upplysningen om skulden). *Verkställt i
+  väntan på svaret:* A, enligt byggregeln (en blockerande granskning lagas genom strykning). *Frågan till Fable:* B
+  eller C för X-1, och hur avgörs «årskostnaden bar avbetalningen»?
 - **Underlag för ett kort Fable-pass (Fable kunde inte anropas 17 och 18 nov, kontots kvot slut; eskaleringsregeln):**
   *Problemet:* S1:s planvalsgrind (agents/recommender/recommend.js, höljet `planvalsgrind`) nollade det mobilbyte som
   sanitetsvakten i api/test-invoice.mjs prövade på main, så kombinerade mobilfakturor som main höll i granskning gick
@@ -29,13 +41,16 @@ startar om läser blocket först.
   Sviten först var röd i CI på FV-A20 (instrumentet gick ut på nätet för valutakursen; lagat i PR:en, [VAKT]).
   `npm run deploy` publicerade frontenden (gh-pages 768c3ec9), och Vercels produktionsdriftsättning av c355e042 är
   READY. Live-verifieringen av mobilbeskedet hör till S8.
-- **Steg:** hårdvaruavbetalningen, en egen PR efter S1 (X-1:s rot och Å-1, båda förexisterande och synliga för kund
-  på main). «Ni betalar idag» drar bara av en avbetalning som årskostnaden bar, i fakturans period; fyndkortet, vyns
-  summa och rummets uppdelning kallar inte en hårdvarurad engångsbelopp; rummets dom och räknare skriver inget streck
-  när fyndet saknar årstal; meningen om en övertagen skuld står bara där rekommendationen räknade med skulden.
+- **Steg:** hårdvaruavbetalningen, en egen PR efter S1 (Å-1, förexisterande och synligt för kund på main). Efter
+  första blicken (25 nov) bär PR:en orden: en rad som beskriver en avbetalning, eller är typad `hardware`, kallas aldrig
+  engångsbelopp, engångskostnad eller «engångs eller rörlig»; rummets dom och räknare skriver inget streck när fyndet
+  saknar årstal; meningarna om en övertagen skuld bär inget tal. Justeringens tal (X-1) står som på main och väntar på
+  sömdesignen (Fable-underlaget ovan, A-2).
 - **Senaste mekanikcommit på grenen:** «Hårdvaruavbetalningen: dra bara av det årskostnaden bar, och kalla den inte
   engångsbelopp (X-1, Å-1)».
-- **Lins igång:** ja, första blicken på hårdvaru-PR:en; domen skrivs till `ops/GRANSKNING-hardvara-forsta.md`.
+- **Lins igång:** nej. Första blicken blockerade 7fdbd012 (`ops/GRANSKNING-hardvara-forsta.md`: H-1 [KUND] vanligare,
+  H-2 [KUND] infört). Lagningen enligt byggregeln: justeringens tal står som på main, PR:en bär orden. Andra blicken
+  startas på lagningen.
 - **Fable:** tre analyser av gränssnittet, frontend och kontoret står i `ops/ANALYS-GRANSSNITT-FABLE.md`, med Opus
   avläsning av fynden. De förs in i stegen efter S1.
 - **Byggare igång:** nej.
@@ -613,6 +628,9 @@ När grinden är grön skriver byggaren en rapport och ändrar `Nu` till «Våg 
 
 Det här kan inte göras härifrån. Inget av det stoppar bygget. G5 och G7 kan kräva det.
 
+0. **Anthropic-saldot är slut (avläst 25 nov): analysmotorn är nere i produktionen.** Fyll på saldot och slå gärna på
+   automatisk påfyllning: platform.claude.com → Organization settings → Billing. Säg till efteråt; byggaren kör
+   live-sonden igen och bekräftar att motorn svarar.
 1. **`ARVO_ALERT_EMAIL` i Vercel** ska peka på en inkorg som finns. Mätt 29 sep: `arvoflow.se` har ingen
    MX-post, så varje notis till `team@arvoflow.se` studsade. Dagens läge läses av i S8.
 2. **En kontaktadress som tar emot mejl**, för integritetstexten och villkoren (samma rot som punkt 1).

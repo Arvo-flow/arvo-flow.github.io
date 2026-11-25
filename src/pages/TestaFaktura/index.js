@@ -1921,11 +1921,10 @@ const TestaFaktura = () => {
                                 <>
                                   {formatNum(adjAnnualCost)} → {formatNum(result.recommendation.suggestedAnnualCost)} kr/år hos <strong>{result.recommendation.suggestedSupplier}</strong>
                                   {' '}· Arvos besparingsarvode {formatKr(adjArvoFee)} (20 %)
-                                  {/* Rekommendationens nettobesparing är talet för en övertagen skuld bara när avbetalningen
-                                      ingick i årskostnaden (skuldenIArskostnaden, X-1). Annars jämförde den redan utan skulden. */}
-                                  {hasHwAdj && <><br /><small style={{ opacity: 0.85 }}>Avser abonnemang och licenser.{_hwAdj.skuldenIArskostnaden
-                                    ? <> Om {result.recommendation.suggestedSupplier} absorberar er hårdvaruskuld ({formatNum(_hwTotalRemain)} kr) uppgår nettobesparing till {krPerAr(result.recommendation.netSaving)}.</>
-                                    : <> Hårdvaruskulden ({formatNum(_hwTotalRemain)} kr) ingår inte i jämförelsen.</>}</small></>}
+                                  {/* Här stod «uppgår nettobesparing till {netSaving}» för fallet att skulden tas över. Det talet
+                                      går inte att räkna hem: svarets nettobesparing kan räknas med eller utan avbetalningen,
+                                      beroende på radtyp och projektion (H-1, H-2, första blicken på hårdvaru-PR:en). Strukket. */}
+                                  {hasHwAdj && <><br /><small style={{ opacity: 0.85 }}>Avser abonnemang och licenser. Fråga {result.recommendation.suggestedSupplier} om de kan ta över er hårdvaruskuld ({formatNum(_hwTotalRemain)} kr).</small></>}
                                 </>
                               )
                               : (
@@ -2168,7 +2167,7 @@ const TestaFaktura = () => {
                       <p style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
                         <strong>Break-even om skulden löses kontant:</strong>{' '}
                         {formatNum(_hwTotalRemain)} kr ÷ {formatNum(adjGrossSaving)} kr/år = <strong>{String(_hwAdj.breakEvenYears).replace('.', ',')} år</strong>{' '}—{' '}
-                        fråga {result.recommendation?.suggestedSupplier ?? 'den nya leverantören'} om de kan absorbera skulden vid avtalssignering.{_hwAdj.skuldenIArskostnaden ? <> Om ja är besparingen {krPerAr(result.recommendation.netSaving)} netto från dag ett.</> : null}
+                        fråga {result.recommendation?.suggestedSupplier ?? 'den nya leverantören'} om de kan absorbera skulden vid avtalssignering.
                       </p>
                     )}
                   </CreditAlert>

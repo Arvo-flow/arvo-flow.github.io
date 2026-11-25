@@ -14,6 +14,7 @@ import { klassificera, kundmening } from '../../lib/motorhalsa.js';
 import { extraheraTextlager } from '../../lib/pdf-textlager.js';
 import { lasTryckKurs } from '../../lib/tryckkurs.js';
 import { korrigeraAntalUrKolumn } from '../../lib/fakturakolumner.js';
+import { arAvbetalningsrad } from '../../lib/forensics.js';
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 import { FEWSHOT_EXAMPLES } from './fewshot-examples.js';
@@ -881,9 +882,12 @@ export function aggregateLineItems(rawInput, tokens) {
   const recurringAmount = sum('recurring_subscription');
   const variableCharges = sum('variable_usage');
   const oneTimeFees     = sum('one_time_fee') + sum('hardware');
-  // Hårdvarudelen av `oneTimeFees`, så att fakturavyn kan säga vad summan består av. En rad typad
-  // `hardware` kan vara en avbetalning som löper i 36 månader och är då inget engångsbelopp (Å-1).
-  const hardwareCharges = sum('hardware');
+  // Hårdvarudelen av `oneTimeFees`, så att fakturavyn kan säga vad summan består av. En avbetalning löper i
+  // 36 månader och är inget engångsbelopp (Å-1), vilken av summans två typer extraktionen än gett den (H-3).
+  // Samma igenkänning som fyndkortet (lib/forensics.js `arAvbetalningsrad`).
+  const hardwareCharges = (raw.lineItems ?? [])
+    .filter((l) => (l.type === 'one_time_fee' || l.type === 'hardware') && arAvbetalningsrad(l))
+    .reduce((s, l) => s + l.amount, 0);
 
   // Beräkna faktureringsperiod från datum i första hand — kan inte luras av fotnotstext.
   // AI-värdet används bara som fallback när inga datum finns på fakturan.

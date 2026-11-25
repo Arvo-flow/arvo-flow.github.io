@@ -2161,8 +2161,6 @@ export default async function handler(req, res) {
     const hardwareAdjustment = computeHardwareAdjustment({
       lineItems:           extracted.lineItems,
       annualCost:          extracted.annualCost,
-      // Kvoten annualCost / projectedRecurringAmount är den faktor årskostnaden räknades med (X-1).
-      projectedRecurringAmount: extracted.projectedRecurringAmount,
       suggestedAnnualCost: _responseSuggested,
       shouldSwitch:        recommendation.shouldSwitch === true,
     });

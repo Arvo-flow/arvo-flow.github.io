@@ -393,21 +393,51 @@ Var och en byggs i en egen PR, med egen granskning.
     identisk på main (`git show origin/main:src/pages/TestaFaktura/index.js`), och efter lagningen av Å-1 når den samma
     fakturor som på main. Syns för kund i dag; egen PR, efter hårdvaruavbetalningen.
 
-- **Hårdvaruavbetalningen, byggd 18 nov efter S1 (X-1:s rot och Å-1, förexisterande och synliga för kund på main):**
-  · «Ni betalar idag» drog avbetalningen (× 12) från en årskostnad som aldrig bar den, när extraktionen typat raden
-    `hardware`; och på en kvartalsfaktura blev avbetalningens årsbelopp tre gånger för stort. Nu dras bara en rad som
-    årskostnaden bar, med årskostnadens egen faktor (lib/hardware-installments.js, HJ-01..05, FV-A21).
-  · «engångsbelopp» (fyndkortet), «engångskostnader» (fakturavyn) och «engångs eller rörlig» (rummets uppdelning) om en
-    avbetalning: nu bara om en engångsavgift; en hårdvarurad heter «på fakturan» respektive «hårdvara» (FO-13, FO-14,
-    FR-10). Meningen sökt i kodbasen, inte funktionen (regel 8).
-  · Rummet skrev «Vi fångade – kr/år» när fyndet saknar årstal; nu «Vi fångade en kostnad» och räknaren visar radens
+- **Hårdvaruavbetalningen, byggd 18 nov efter S1, lagad 25 nov efter första blicken (`ops/GRANSKNING-hardvara-forsta.md`):**
+  · Första versionen ändrade också justeringens tal (X-1): «Ni betalar idag» drog bara av en avbetalning typad som
+    abonnemang, i fakturans period. Första blicken blockerade: H-1 [KUND], vanligare — på en kombinerad faktura räknar
+    justeringen mobildelen som besparing, eftersom målpriset bara gäller primärdelen (`rest·bb+mob+hw·ja`: vyn +6 230
+    mot mains +1 920 och svarets egna 3 648); H-2 [KUND], infört — när modellens projektion bär avbetalningen blev
+    «Ni betalar idag» 17 004 där main visade 11 616. Lagat enligt byggregeln (strykning): justeringens tal står som på
+    main, och frågan om hur de ska räknas väntar på sömdesignen (Fable-underlaget överst i `Nu`, A-2). X-1 och H-1 är
+    alltså kvar, förexisterande och synliga för kund på main.
+  · Orden, kvar i PR:en: en rad som beskriver en avbetalning (samma igenkänning som detektorerna, `AMORT_RE`) eller är
+    typad `hardware` kallas aldrig «engångsbelopp» (fyndkortet, också ett lagrat fynd utan sparade rader), aldrig
+    «engångskostnader» (fakturavyns summa, `hardwareCharges`) och aldrig «engångs eller rörlig» (rummets uppdelning),
+    vilken typ extraktionen än gett raden (H-3, inom PR:ens syfte). `lib/forensics.js arAvbetalningsrad` är den enda
+    igenkänningen. FO-13..15, FR-10, FV-A21.
+  · Rummet skrev «Vi fångade – kr/år» när fyndet saknar årstal; nu «Vi fångade en kostnad», och räknaren visar radens
     belopp «på en faktura».
-  · Följdfynd under bygget: fakturavyns «Om X absorberar er hårdvaruskuld uppgår nettobesparing till N» och break-even-
-    styckets «Om ja är besparingen N» citerade rekommendationens nettobesparing som talet för en övertagen skuld. Det
-    stämmer bara när avbetalningen ingick i årskostnaden; annars jämförde rekommendationen redan utan skulden, och
-    med lagningen hade meningen upprepat samma tal som rubriken. Meningen står nu bara då (`skuldenIArskostnaden`).
-  · Renderingssond `scripts/screenshot-hardvara.mjs` (390 och 1600 px), motprov mot PR #89:s bygge och handler: varje
-    lagad kontroll röd där, motprovsfallen gröna i båda.
+  · Fakturavyns «Om X absorberar er hårdvaruskuld uppgår nettobesparing till N» och «Om ja är besparingen N netto från
+    dag ett» bar ett tal som inte går att räkna hem (svarets netto räknas med eller utan avbetalningen beroende på radtyp
+    och projektion). Talet är strukket; frågan om skulden står kvar.
+  · Renderingssond `scripts/screenshot-hardvara.mjs` (390 och 1600 px): grön; mot mains bygge och handler röd på varje
+    lagad kontroll, motprovet med årstal grönt i båda.
+  · Kvar från första blicken, [VAKT], lagas framåt: H-4 (nio sabotage mot ytorna fällde noll tester i sviten; sonden
+    fångar fem av dem men ingår inte i sviten, bl.a. rummets streck, «Inkl.»-etiketten och räknaren), H-5
+    (påståendevakten läser inte test-ID med «Å»; referensen i Portfolio är rättad till sonden).
+  · Förexisterande, utanför PR:en (första blicken, [KUND]): fynd på en EUR- eller USD-faktura visar originalbeloppet
+    som «kr» (forensiken körs före valutaomräkningen, api/test-invoice.mjs ~787 mot ~887; `adv·eur`: «39 kr» för en
+    rad på 410 kr); en «Avbetalning …, månad X av Y» typad som abonnemang känns inte igen av justeringen
+    (`detectHardwareInstallments` kräver `hardware` eller «delbetalning»), så skulden räknas som besparing (+7 958).
+
+- **Läget på main 25 nov (fabrikssvepets steg 2, avläst i Actions och Vercel):**
+  · **Analysmotorn är nere i produktionen: Anthropic-kontots saldo är slut.** Live-sonden (diag-live, körning
+    45680544791, färsk analys) föll i extraktionen med `kod: saldo`, HTTP 400. Ingen kund har mött det de senaste sju
+    dagarna: Vercels loggar har inget fakturaanrop och inga fel utom sondens eget (motprovet att loggen ser felet). Den
+    nattliga hälsokontrollen har varit röd varje natt sedan minst 16 nov (äldre körningar är inte avlästa).
+    Grundaråtgärd: fyll på saldot (platform.claude.com → Organization settings → Billing).
+  · [VAKT] diag-live blev grön och skrev «✓ Färsk analys» när analysen föll; den ska fälla ett svar med `kod`/`error`.
+    `api/health.mjs` prövar bara att nyckeln finns, inte att kontot kan analysera; timkontrollen ser alltså inte ett
+    slut saldo.
+  · E2E-testet (23 nov) föll på samma saldo; dess elva fällda påståenden följer av det.
+  · Verifieringen av priskällorna (23 nov), fem röda: tele2-bredband DRIFT på 16 poster (live lägre på 12 månaders
+    bindning än på 24, alltså troligen en kampanj; steg 10 i sekvensen prövar det, boken rörs inte före); tele2-mobil
+    DRIFT median 299 → 289 (Obegränsad, inte prövad som kampanj); zoom och adobe OLÄSBAR (sidorna visar ett rabatterat
+    förstaårspris bredvid listpriset, vakten hittar inte listpriset); villkorsbok DRIFT (Bahnhofs allmänna villkor
+    omskrivna sedan 10 aug; klausulen ska läsas om).
+  · [VAKT] Grinden blev röd vid pushen av S1:s merge till main (körning 44383862670, «Andra blicken»): merge-commiten
+    räknas som en mekanikändring efter den granskade commiten. Ett falsklarm på en granskad merge.
 
 - **Ur den sextonde blickens dom på S1 (`ops/GRANSKNING-s1-sextonde.md`):**
   · Ö-1 [KUND], infört av a3a6e83f (blockerade): valutagrindens spridning kopierade det ogrindade bytet, så en

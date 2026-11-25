@@ -144,5 +144,14 @@ describe('FAKTURARADER · uppdelningen måste summera till rubriken', () => {
       { type: 'one_time_fee', description: 'Uppläggningsavgift', amount: 450 },
     ], { annualCost: 12000, billingPeriod: 'monthly' });
     assert.equal(utan.harHardvara, false);
+    // H-3: samma avbetalning typad som engångsavgift eller rörlig avgift är fortfarande hårdvara.
+    for (const type of ['one_time_fee', 'variable_usage']) {
+      const u2 = byggUppdelning([
+        rad({ description: 'Jobbmobil M (5 st)', quantity: 5, unitPrice: 349, amount: 1745 }),
+        { type, description: 'Delbetalning iPhone 15 Pro, månad 12 av 36', amount: 449 },
+      ], { annualCost: 20940, billingPeriod: 'monthly' });
+      assert.deepEqual(u2.engangs.map((r) => r.spec), ['hårdvara'], type);
+      assert.equal(u2.harHardvara, true, type);
+    }
   });
 });

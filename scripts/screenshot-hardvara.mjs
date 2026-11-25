@@ -5,15 +5,14 @@
 // produktionens funktioner (refineFinding, byggUppdelning, buildBranchAnchors, berikaRader, byggRum).
 //
 // KONTROLLER I DOM:EN:
-//   fakturavyn, avbetalning typad hardware (månad och kvartal) → «Ni betalar idag» är årskostnaden (11 616, 8 388),
-//                avbetalningens årsbelopp i fakturans period (5 388 kr/år båda), «Inkl. … kr hårdvara», fyndet
-//                «… kr · på fakturan»; aldrig «engångsbelopp», «engångskostnader» eller ett löfte om vad
-//                besparingen blir om skulden tas över
-//   fakturavyn, avbetalning typad som abonnemang (motprov) → «Ni betalar idag» utan avbetalningen (11 616) och
-//                meningen om en övertagen skuld står kvar: sonden kan se meningen
+//   fakturavyn, avbetalning typad hardware (månad och kvartal) och typad engångsavgift (H-3) → «Inkl. … kr hårdvara»
+//                och fyndet «… kr · på fakturan»; aldrig «engångsbelopp» eller «engångskostnader», och aldrig ett tal för
+//                fallet att skulden tas över («uppgår nettobesparing till», «Om ja är besparingen»): talet är strukket
+//                (H-1, H-2). Motprov i samma vy: frågan om skulden står kvar, så sonden läser stycket.
 //   rummet, fynd utan årstal → «Vi fångade en kostnad», räknaren «1 347 kr på en faktura», uppdelningens rad
 //                «hårdvara»; aldrig «–» före «kr/år», «engångsbelopp» eller «engångs eller rörlig» om avbetalningen
 //   rummet, fynd med årstal (motprov) → «Vi fångade 5 388 kr/år»: sonden kan se talet
+// Justeringens tal (X-1, «Ni betalar idag») står som på main och prövas inte här.
 // BLIND: nätverket är stubbat och modellens svar är författade. Rummets läsning av den lagrade raden
 //   (refineFinding och byggUppdelning i api/invoice-history.mjs) är speglad här, inte anropad genom handlern.
 //
@@ -35,7 +34,7 @@ if (!existsSync(join(BUILD, 'index.html'))) { console.error(`✗ ${BUILD} saknas
 const imp = (p) => import(pathToFileURL(join(ROT, p)).href);
 
 const { HARDVARUFALL, RESTFALL } = await import(pathToFileURL(join(new URL('..', import.meta.url).pathname, 'tests/fakturakedjan/fall.mjs')).href);
-const VALDA = ['rest·bb+mob+hw·ja', 'hw·kvartal·ja', 'hw·abonnemang·ja'];
+const VALDA = ['rest·bb+mob+hw·ja', 'hw·kvartal·ja', 'hw·kvartal·otf·ja'];
 const fall = [...HARDVARUFALL, ...RESTFALL].filter((f) => VALDA.includes(f.id));
 const dir = await mkdtemp(join(tmpdir(), 'hardvara-'));
 await writeFile(join(dir, 'fall.json'), JSON.stringify(fall));
@@ -123,9 +122,9 @@ async function rummet(bredd, rum) {
 }
 
 const VY = {
-  'rest·bb+mob+hw·ja': { idag: 11616, hw: 5388, inkl: 'Inkl. 449 kr hårdvara', fynd: '449 kr · på fakturan', skuld: false },
-  'hw·kvartal·ja': { idag: 8388, hw: 5388, inkl: 'Inkl. 1 347 kr hårdvara', fynd: '1 347 kr · på fakturan', skuld: false },
-  'hw·abonnemang·ja': { idag: 11616, hw: 5388, inkl: null, fynd: null, skuld: true },
+  'rest·bb+mob+hw·ja': { inkl: 'Inkl. 449 kr hårdvara', fynd: '449 kr · på fakturan' },
+  'hw·kvartal·ja': { inkl: 'Inkl. 1 347 kr hårdvara', fynd: '1 347 kr · på fakturan' },
+  'hw·kvartal·otf·ja': { inkl: 'Inkl. 1 347 kr hårdvara', fynd: '1 347 kr · på fakturan' },
 };
 for (const bredd of [390, 1600]) {
   for (const [id, v] of Object.entries(VY)) {
@@ -134,16 +133,11 @@ for (const bredd of [390, 1600]) {
     const t = await text(p);
     await p.screenshot({ path: join(UT, `vy-${id.replace(/[·+]/g, '_')}-${bredd}.png`), fullPage: true });
     const ctx = `${id} @${bredd}`;
-    if (!new RegExp(`Ni betalar idag ${kr(v.idag)} kr`, 'i').test(t)) fel(`${ctx}: «Ni betalar idag ${kr(v.idag)} kr» saknas`);
-    if (!t.includes(`Exkl. hårdvaruavbetalningar (${kr(v.hw)} kr/år)`)) fel(`${ctx}: avbetalningens årsbelopp ${kr(v.hw)} saknas`);
-    if (v.inkl && !t.includes(v.inkl)) fel(`${ctx}: «${v.inkl}» saknas`);
-    if (v.fynd && !t.includes(v.fynd)) fel(`${ctx}: fyndet «${v.fynd}» saknas`);
-    if (v.skuld) {
-      if (!/absorberar er hårdvaruskuld|Om ja är besparingen/.test(t)) fel(`${ctx}: motprovet — meningen om en övertagen skuld saknas`);
-    } else {
-      for (const f of ['engångsbelopp', 'engångskostnader', 'absorberar er hårdvaruskuld', 'Om ja är besparingen']) {
-        if (t.includes(f)) fel(`${ctx}: «${f}» står i vyn`);
-      }
+    if (!t.includes(v.inkl)) fel(`${ctx}: «${v.inkl}» saknas`);
+    if (!t.includes(v.fynd)) fel(`${ctx}: fyndet «${v.fynd}» saknas`);
+    if (!/ta över er hårdvaruskuld|kan absorbera skulden/.test(t)) fel(`${ctx}: motprovet — frågan om skulden saknas`);
+    for (const f of ['engångsbelopp', 'engångskostnader', 'uppgår nettobesparing till', 'Om ja är besparingen']) {
+      if (t.includes(f)) fel(`${ctx}: «${f}» står i vyn`);
     }
     await p.close();
   }
